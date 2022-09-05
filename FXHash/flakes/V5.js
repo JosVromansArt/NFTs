@@ -1,29 +1,3 @@
-/*
-CHANGELOG V5
-
-NOTES TODO:
-
-+ love the amount of individual shapes here and the variety in size and that some of them appear in isolation while others appear
-to be part of a larger movement (like the spear from top left to bottom right corner).... I think pushing the extremes of this balance can provide a ton of variation to the series... some iterations get like 10x tiny shapes, some a much lower quantity of mostly larger shapes, some have more scale variety amongst shapes.
-
-+ varying gap size (not sure if it's a gap or a stroke actually) within a piece
-
-+ slight shifts in placement of individual shapes: moved and/or rotated.
-If combined with some sort of either intentional or random ordering, I think it can create interesting overlap dynamics...
-
-+ to push that overlap idea further, what happens in those moments? is there a shadow cast down on the lower shape? is there some sort of bleeding and melding of colors? etc...
-
-+ going even further on all these preceding ideas, what if there are bends and imperfections in any particular shape's sides: a curve, a chipped notch, a frayed edge... and what if adjacent edges react to meet these imperfections? i consider this the 'advanced' evolution : ) maybe not needed, but something in our back pocket for later maybe.
-
-+ I think a lot of richness can come from texture applied to throughout the shapes. your recent sketches speak to this, as does the color photogram from before... grain and distressing, slight gradients, noisy shape edges, painterly effects like in attraction.
-
-+ how do you prefer to assign colors? completely programmattically, or as predefined palettes (even if they are large and you pick randomly from within them), or?
-
-+ related to color, one thing that comes to mind, is that the series could prob do without alpha shifts... like if we want to make something lighter/darker that could have its place, but the idea of semi-transparency so rarely "works" in gen art, imo, because it looks so computery : )
-
-
-*/
-
 //C=document.getElementById('C');
 W=window;
 w=W.innerWidth;
