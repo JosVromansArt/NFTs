@@ -1,6 +1,7 @@
 /*
-CHANGELOG V6
+CHANGELOG V8
 
+- randomize option
 
 */
 
@@ -43,6 +44,14 @@ PALETTES = [
 ]
 function get_new_color(hue, s, l){return choice(PALETTE)}
 
+
+randomize=(xy, factor=10)=>{
+    if (!xy[1]){return xy}
+
+    factor = 10 * h/xy[1];
+    return [xy[0] + R()*2*factor-factor, xy[1] + R()*2*factor-factor]
+}
+
 class Triangle {
     constructor(p1,p2,p3, hue, s=50, l=50){
 //        if (hue === undefined){hue=R()*300|0;}
@@ -74,6 +83,10 @@ class Triangle {
         SUBDIV_COUNTER += 1;
         let [a,b,c, hue, s, l] = [this.p1, this.p2, this.p3, this.hue, this.s, this.l];
         let random_value = R();
+
+        a = randomize(a, 50);
+        b = randomize(b, 50);
+        c = randomize(c, 50);
 
         let ab = get_midpoint(a,b);
 
