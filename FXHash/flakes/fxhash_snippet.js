@@ -16,7 +16,7 @@ return () => {
   return (t >>> 0) / 4294967296
 }
 }
-var fxrand = sfc32(...hashes)
+console.log(hashes);
 // true if preview mode active, false otherwise
 // you can append preview=1 to the URL to simulate preview active
 var isFxpreview = new URLSearchParams(window.location.search).get('preview') === "1"
