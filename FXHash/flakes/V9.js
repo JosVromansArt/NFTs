@@ -6,7 +6,7 @@ CHANGELOG V9
 */
 
 // override hashes from the fxhash snippet with a fixed value
-hashes = [ -346091956, -236598525, 429364864, 839853118 ];
+//hashes = [ -346091956, -236598525, 429364864, 839853118 ];
 fxrand = sfc32(...hashes)
 
 //C=document.getElementById('C');
