@@ -169,7 +169,6 @@ class Triangle {
     }
 }
 
-
 function transform_color(triangle, d1=0, d2=0, d3=0){
     if (triangle.color === undefined){
         return [0,80,40];
@@ -177,10 +176,6 @@ function transform_color(triangle, d1=0, d2=0, d3=0){
 
     return [triangle.color[0] + d1, triangle.color[1] + d2,  triangle.color[2] + d3]
 }
-
-SUBDIV_COUNTER = 0;
-TO_DRAW = [];
-
 
 function subdivide(triangle_list, depth=0){
     let next_tri_list = []
@@ -263,6 +258,8 @@ function do_blur(){
 }
 
 function make_artwork(){
+    SUBDIV_COUNTER = 0;
+    TO_DRAW = [];
     X.fillStyle='#000';
     X.fillRect(0,0,w,h);
 
