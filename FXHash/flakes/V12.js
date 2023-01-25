@@ -1,9 +1,8 @@
 /*
 CHANGELOG V12
-
-
+- add Shrinking
+- add stroked lines, but not activated (might be deleted)
 */
-
 //C=document.getElementById('C');
 W=window;
 w=W.innerWidth;
