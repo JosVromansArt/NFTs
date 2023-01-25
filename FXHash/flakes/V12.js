@@ -19,7 +19,7 @@ X=C.getContext('2d');
 X.scale(pR,pR);
 
 
-//fxrand = sfc32(1412376586, -2023799641, -369540445, 421517735)
+//fxrand = sfc32(154605100, 20411353, 1667737990, -601735493)
 R=fxrand;
 randomInt=(a, b)=>Math.floor(a + (b - a) * R());
 choice=(x)=>x[randomInt(0, x.length * 0.99)];
@@ -69,6 +69,21 @@ class Triangle {
         this.p2=p2;
         this.p3=p3;
     }
+
+    shrink(shrink_perc=.07){
+        let m12 = get_midpoint(this.p1, this.p2);
+        let m23 = get_midpoint(this.p2, this.p3);
+        let m13 = get_midpoint(this.p1, this.p3);
+
+        let towards_m12 = get_point_on_line(this.p3, m12, shrink_perc);
+        let towards_m23 = get_point_on_line(this.p1, m23, shrink_perc);
+        let towards_m13 = get_point_on_line(this.p2, m13, shrink_perc);
+
+        this.p1 = towards_m23;
+        this.p2 = towards_m13;
+        this.p3 = towards_m12;
+    }
+
     draw(){
         X.fillStyle = hsl_to_str(...choice(PALETTE));
         X.beginPath();
@@ -83,13 +98,17 @@ class Triangle {
     }
 
     draw_strokes(){
+        // find the sharpest angle, and start the perc_on_line from that angle.
+        // inherit color from the parent. With a change to divert. So areas with the same color appear,
+        // but also different palette/areas are possible
         let [a,b,c] = [this.p1, this.p2, this.p3]
         let color_index = 0;
         let fill_color = COLORS[color_index];
         X.lineWidth = w/8000;
         let perc1 = R();
         let perc2 = R();
-        COLORS=choice(PALETTES).map(c=>hsl_to_str(...c))
+//        COLORS=choice(PALETTES).map(c=>hsl_to_str(...c))
+        COLORS=PALETTES[PALETTE_INDEX].map(c=>hsl_to_str(...c))
 
         for (let i=0; i<20000; i++){
             if (i%change_color_step===0){
@@ -171,9 +190,6 @@ function subdivide(triangle_list, depth=0){
     }
     if (depth < DEPTH){
         subdivide(next_tri_list, depth+choice([1,2,3,5,5,5,5,6,8,8]));
-        subdivide(next_tri_list, depth+choice([1,2,3,5,5,5,5,6,8,8]));
-//        subdivide(next_tri_list, depth+1);
-//        subdivide(next_tri_list, depth+2);
     } else {
         console.log(next_tri_list.length)
         TO_DRAW = TO_DRAW.concat(next_tri_list);
@@ -257,7 +273,7 @@ function make_artwork(){
     OUTLINE = choice(['black', 'white', 'none', 'none', 'none'])
     LINE_WIDTH = choice([1000, 2000, 3000, 4000, 6000, 8000]);
     DEPTH = choice([5,8,10,12, 14,14, 16, 18]);
-    DEPTH = 5;
+    SHRINK = choice(['Constant', 'No', 'Sometimes'])
 
     PALETTE_INDEX = choice([0,1,2,3,4,5,6,7,8])
     PALETTE = PALETTES[PALETTE_INDEX];
@@ -270,6 +286,7 @@ function make_artwork(){
         'Depth': DEPTH,
         'Palette': [0,1,2,3,4,5,6,7,8][PALETTE_INDEX],
         'Random Offset': RANDOM_OFFSET,
+        'Shrink': SHRINK,
     }
     file_name = '_depth' + DEPTH.toString();
     if (OUTLINE !== 'none'){
@@ -283,19 +300,19 @@ function make_artwork(){
     subdivide(get_start_triangles());
     //alert(TO_DRAW.length);
 
-
-    for (let i=1; i<20; i++){
-        TO_DRAW.at(-i).draw_strokes() //_strokes();
-    }
-    console.log(TO_DRAW.length, '  total trig count')
-//    TO_DRAW.at(-1).draw_strokes();
-//    TO_DRAW.at(-2).draw_strokes();
-//    TO_DRAW.at(-3).draw_strokes();
-//    TO_DRAW.at(-4).draw_strokes();
-//    TO_DRAW.at(-5).draw_strokes();
-
-//    TO_DRAW.forEach(t=>t.draw_strokes());
-
+    TO_DRAW.forEach(t=>{
+        if (SHRINK!=='No'){
+            if (SHRINK=='Sometimes'){
+                if (R()<.3){
+                    t.shrink(R()*R())
+                }
+            } else {
+                t.shrink()
+            }
+        }
+        t.draw();
+//        t.draw_strokes()
+    });
     do_blur();
 
     //alert(SUBDIV_COUNTER);
