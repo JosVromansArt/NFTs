@@ -1,6 +1,7 @@
 /*
 CHANGELOG V12
 - add Shrinking
+- remove the largest random offsets (only allow subtle offset)
 - add stroked lines, but not activated (might be deleted)
 */
 //C=document.getElementById('C');
@@ -273,7 +274,7 @@ function make_artwork(){
 
     PALETTE_INDEX = choice([0,1,2,3,4,5,6,7,8])
     PALETTE = PALETTES[PALETTE_INDEX];
-    RANDOM_OFFSET = choice([0,0,0,0,1,2,2,3,4,5,10,30])
+    RANDOM_OFFSET = choice([0,0,0,0,1,2,2,3,4,5])
 
     X.lineWidth=h/LINE_WIDTH;
     FEATURES_DICT = {
