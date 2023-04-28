@@ -18,8 +18,7 @@ C.style.height=`${h}px`;
 X=C.getContext('2d');
 X.scale(pR,pR);
 
-
-//fxrand = sfc32(154605100, 20411353, 1667737990, -601735493)
+fxrand = sfc32(-2136503300, 630882256, -787179168, -1446271431);  // check outline with this one
 R=fxrand;
 randomInt=(a, b)=>Math.floor(a + (b - a) * R());
 choice=(x)=>x[randomInt(0, x.length * 0.99)];
@@ -97,45 +96,45 @@ class Triangle {
         }
     }
 
-    draw_strokes(){
-        // find the sharpest angle, and start the perc_on_line from that angle.
-        // inherit color from the parent. With a change to divert. So areas with the same color appear,
-        // but also different palette/areas are possible
-        let [a,b,c] = [this.p1, this.p2, this.p3]
-        let color_index = 0;
-        let fill_color = COLORS[color_index];
-        X.lineWidth = w/8000;
-        let perc1 = R();
-        let perc2 = R();
-//        COLORS=choice(PALETTES).map(c=>hsl_to_str(...c))
-        COLORS=PALETTES[PALETTE_INDEX].map(c=>hsl_to_str(...c))
-
-        for (let i=0; i<20000; i++){
-            if (i%change_color_step===0){
-                X.strokeStyle = COLORS[color_index % COLORS.length];
-                color_index ++;
-            }
-            let start = get_point_on_line(a,b, perc1)
-//            if (same){
-            perc2=perc1  // remove other values, only use same
+//    draw_strokes(){
+//        // find the sharpest angle, and start the perc_on_line from that angle.
+//        // inherit color from the parent. With a change to divert. So areas with the same color appear,
+//        // but also different palette/areas are possible
+//        let [a,b,c] = [this.p1, this.p2, this.p3]
+//        let color_index = 0;
+//        let fill_color = COLORS[color_index];
+//        X.lineWidth = w/8000;
+//        let perc1 = R();
+//        let perc2 = R();
+////        COLORS=choice(PALETTES).map(c=>hsl_to_str(...c))
+//        COLORS=PALETTES[PALETTE_INDEX].map(c=>hsl_to_str(...c))
+//
+//        for (let i=0; i<20000; i++){
+//            if (i%change_color_step===0){
+//                X.strokeStyle = COLORS[color_index % COLORS.length];
+//                color_index ++;
 //            }
-            let end = get_point_on_line(a,c, perc2)
-
-            // draw a single line
-            X.beginPath();
-            X.moveTo(...randomize_co(start));
-            X.lineTo(...randomize_co(end));
-            X.stroke();
-
-            perc1 += random_step();
-            perc2 += random_step();
-
-            perc1 = Math.max(perc1, 0)
-            perc2 = Math.max(perc2, 0)
-            perc1 = Math.min(perc1, 1)
-            perc2 = Math.min(perc2, 1)
-        }
-    }
+//            let start = get_point_on_line(a,b, perc1)
+////            if (same){
+//            perc2=perc1  // remove other values, only use same
+////            }
+//            let end = get_point_on_line(a,c, perc2)
+//
+//            // draw a single line
+//            X.beginPath();
+//            X.moveTo(...randomize_co(start));
+//            X.lineTo(...randomize_co(end));
+//            X.stroke();
+//
+//            perc1 += random_step();
+//            perc2 += random_step();
+//
+//            perc1 = Math.max(perc1, 0)
+//            perc2 = Math.max(perc2, 0)
+//            perc1 = Math.min(perc1, 1)
+//            perc2 = Math.min(perc2, 1)
+//        }
+//    }
 
 
 
@@ -145,7 +144,7 @@ class Triangle {
         let [a,b,c] = [this.p1, this.p2, this.p3];
         let random_value = R();
 
-        a = randomize(a, RANDOM_OFFSET);
+        a = randomize(a, RANDOM_OFFSET);  // TODO: make this depend on the triangle size (roughly)
         b = randomize(b, RANDOM_OFFSET);
         c = randomize(c, RANDOM_OFFSET);
 
@@ -191,26 +190,26 @@ function subdivide(triangle_list, depth=0){
     }
 }
 
-function draw_frame_rounded_corners(r, margin){
-    X.fillStyle = "#000";
-    X.beginPath();
-
-    x=margin;
-    y=margin;
-    ww=w-2*margin;
-    hh=h-2*margin;
-
-    X.beginPath();
-    X.moveTo(x+r, y);
-    X.arcTo(x+ww, y,   x+ww, y+hh, r);
-    X.arcTo(x+ww, y+hh, x,   y+hh, r);
-    X.arcTo(x,   y+hh, x,   y,   r);
-    X.arcTo(x,   y,   x+ww, y,   r);
-    X.closePath();
-
-    X.rect(w, 0, -w, h);
-    X.fill();
-}
+//function draw_frame_rounded_corners(r, margin){
+//    X.fillStyle = "#000";
+//    X.beginPath();
+//
+//    x=margin;
+//    y=margin;
+//    ww=w-2*margin;
+//    hh=h-2*margin;
+//
+//    X.beginPath();
+//    X.moveTo(x+r, y);
+//    X.arcTo(x+ww, y,   x+ww, y+hh, r);
+//    X.arcTo(x+ww, y+hh, x,   y+hh, r);
+//    X.arcTo(x,   y+hh, x,   y,   r);
+//    X.arcTo(x,   y,   x+ww, y,   r);
+//    X.closePath();
+//
+//    X.rect(w, 0, -w, h);
+//    X.fill();
+//}
 
 
 function get_start_triangles(){
@@ -248,15 +247,15 @@ function get_start_triangles(){
     ];
 }
 
-function do_blur(){
-    // original blur was /18 instead of 28
-    r = w/28;  // corner radius
-//    X.filter='blur('+parseInt(w/150)+'px)'
-    draw_frame_rounded_corners(r, margin=r/1.1);
-
-    X.filter='none'
-    draw_frame_rounded_corners(r, margin=r/3.9);
-}
+//function do_blur(){
+//    // original blur was /18 instead of 28
+//    r = w/28;  // corner radius
+////    X.filter='blur('+parseInt(w/150)+'px)'
+//    draw_frame_rounded_corners(r, margin=r/1.1);
+//
+//    X.filter='none'
+//    draw_frame_rounded_corners(r, margin=r/3.9);
+//}
 
 function make_artwork(){
     SUBDIV_COUNTER = 0;
@@ -268,6 +267,7 @@ function make_artwork(){
     // SET FEATURES
     //
     OUTLINE = choice(['black', 'white', 'none', 'none', 'none'])
+//    OUTLINE='none';  // TODO: check outline, on different zoom levels
     LINE_WIDTH = choice([1000, 2000, 3000, 4000, 6000, 8000]);
     DEPTH = choice([5,8,10,12, 14,14, 16, 18]);
     SHRINK = choice(['Constant', 'No', 'Sometimes'])
@@ -276,7 +276,6 @@ function make_artwork(){
     PALETTE_INDEX = 7;
     PALETTE = PALETTES[PALETTE_INDEX];
     RANDOM_OFFSET = choice([0,0,0,0,1,2,2,3,4,5])
-
     X.lineWidth=h/LINE_WIDTH;
     FEATURES_DICT = {
         'Outline': OUTLINE,
@@ -286,6 +285,7 @@ function make_artwork(){
         'Random Offset': RANDOM_OFFSET,
         'Shrink': SHRINK,
     }
+    RANDOM_OFFSET = w * (RANDOM_OFFSET/1000);
     file_name = '_depth' + DEPTH.toString();
     if (OUTLINE !== 'none'){
         file_name += '_' + OUTLINE + ' outline';
