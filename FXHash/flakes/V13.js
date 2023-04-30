@@ -18,12 +18,11 @@ C.style.height=`${h}px`;
 X=C.getContext('2d');
 X.scale(pR,pR);
 
-fxrand = sfc32(-2136503300, 630882256, -787179168, -1446271431);  // check outline with this one
+//fxrand = sfc32(-2136503300, 630882256, -787179168, -1446271431);  // check outline with this one
 R=fxrand;
 randomInt=(a, b)=>Math.floor(a + (b - a) * R());
 choice=(x)=>x[randomInt(0, x.length * 0.99)];
 var file_name;  //  = fxhash;
-
 function hsl_to_str(h,s,l,a=1){return 'hsl(' + h + ',' + s + '%,' + l + '%,' + a + ')';}
 get_midpoint=(a,b)=>[(a[0] + b[0])/2,(a[1] + b[1])/2];
 
@@ -42,18 +41,11 @@ PALETTES = [
 COLORS = ['red', 'white','black','red', 'white','orange','orange','white','blue', 'orange','white','black','white','#CCC','#999','#222','#666','#999','#666','#999','#ddd','#eee'];
 change_color_step = 265;
 
-function get_point_on_line(a,b,perc){
+get_point_on_line=(a,b,perc)=>{
     let diffX = perc * (b[0] - a[0]);
     let diffY = perc * (b[1] - a[1]);
-
-    return [
-        a[0] + diffX,
-        a[1] + diffY,
-    ]
+    return [a[0] + diffX, a[1] + diffY]
 }
-random_step=(tr=.02)=>R()*tr-tr/2
-randomize_co=xy=>[xy[0] + random_step(10),xy[1] + random_step(10)]
-
 randomize=(xy, factor=10)=>{
     if (!xy[1]){return xy}
     if (factor===0){return xy}
@@ -61,7 +53,8 @@ randomize=(xy, factor=10)=>{
     factor = factor * h/xy[1];
     return [xy[0] + R()*2*factor-factor, xy[1] + R()*2*factor-factor]
 }
-
+//random_step=(tr=.02)=>R()*tr-tr/2
+//randomize_co=xy=>[xy[0] + random_step(10),xy[1] + random_step(10)]
 class Triangle {
     constructor(p1,p2,p3){
         this.p1=p1;
@@ -169,13 +162,13 @@ class Triangle {
     }
 }
 
-function transform_color(triangle, d1=0, d2=0, d3=0){
-    if (triangle.color === undefined){
-        return [0,80,40];
-    }
-
-    return [triangle.color[0] + d1, triangle.color[1] + d2,  triangle.color[2] + d3]
-}
+//function transform_color(triangle, d1=0, d2=0, d3=0){
+//    if (triangle.color === undefined){
+//        return [0,80,40];
+//    }
+//
+//    return [triangle.color[0] + d1, triangle.color[1] + d2,  triangle.color[2] + d3]
+//}
 
 function subdivide(triangle_list, depth=0){
     let next_tri_list = []
@@ -271,6 +264,7 @@ function make_artwork(){
     LINE_WIDTH = choice([1000, 2000, 3000, 4000, 6000, 8000]);
     DEPTH = choice([5,8,10,12, 14,14, 16, 18]);
     SHRINK = choice(['Constant', 'No', 'Sometimes'])
+//    SHRINK = 'no';
 
     PALETTE_INDEX = choice([0,1,2,3,4,5,6,7,8])
     PALETTE_INDEX = 7;
