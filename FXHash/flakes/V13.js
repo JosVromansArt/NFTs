@@ -2,7 +2,9 @@
 CHANGELOG V13
 - Use Color Palette 7 for now
 - remove the rounded corner frame
-
+- remove white outline (only no outline and black outline remain)
+- add initial composition property
+- add an extra initial composition type
 */
 //C=document.getElementById('C');
 W=window;
@@ -203,8 +205,18 @@ function subdivide(triangle_list, depth=0){
 //    X.rect(w, 0, -w, h);
 //    X.fill();
 //}
+//function do_blur(){
+//    // original blur was /18 instead of 28
+//    r = w/28;  // corner radius
+////    X.filter='blur('+parseInt(w/150)+'px)'
+//    draw_frame_rounded_corners(r, margin=r/1.1);
+//
+//    X.filter='none'
+//    draw_frame_rounded_corners(r, margin=r/3.9);
+//}
 
 
+COMPOSITION_TYPE = 'unknown'
 function get_start_triangles(){
     let random_value = R();
 
@@ -213,12 +225,29 @@ function get_start_triangles(){
     let C = [w,h];
     let D = [0,h];
 
-    if (random_value < .3){
+    if (random_value < .2){
+        let BC = get_midpoint(B,C);
+        let DA = get_midpoint(D,A);
+        let BBC = get_midpoint(B, BC);
+        let DAD = get_midpoint(DA, D);
+
+        COMPOSITION_TYPE = 'Z'
+        return [
+            new Triangle(A, B, BBC),
+            new Triangle(BBC, A, DAD),
+            new Triangle(BBC, C, DAD),
+            new Triangle(DAD,D,C),
+        ]
+
+
+    } else if (random_value < .3){
+        COMPOSITION_TYPE = 'A'
         return [
             new Triangle(A, B, C),
             new Triangle(C, A, D),
         ]
     } else if (random_value < .66){
+        COMPOSITION_TYPE = 'B'
         let BC = get_midpoint(B,C);
         let DA = get_midpoint(D,A);
 
@@ -231,7 +260,7 @@ function get_start_triangles(){
     }
     let DA = get_midpoint(D,A);
     let DAB = get_midpoint(DA, B);
-
+    COMPOSITION_TYPE = 'C'
     return [
         new Triangle(A, B, DA),
         new Triangle(B, DAB, C),
@@ -240,26 +269,18 @@ function get_start_triangles(){
     ];
 }
 
-//function do_blur(){
-//    // original blur was /18 instead of 28
-//    r = w/28;  // corner radius
-////    X.filter='blur('+parseInt(w/150)+'px)'
-//    draw_frame_rounded_corners(r, margin=r/1.1);
-//
-//    X.filter='none'
-//    draw_frame_rounded_corners(r, margin=r/3.9);
-//}
 
 function make_artwork(){
     SUBDIV_COUNTER = 0;
     TO_DRAW = [];
     X.fillStyle='#000';
     X.fillRect(0,0,w,h);
+    let start_triangles = get_start_triangles();
 
     //
     // SET FEATURES
     //
-    OUTLINE = choice(['black', 'white', 'none', 'none', 'none'])
+    OUTLINE = choice(['black', 'none', 'none', 'none'])
 //    OUTLINE='none';  // TODO: check outline, on different zoom levels
     LINE_WIDTH = choice([1000, 2000, 3000, 4000, 6000, 8000]);
     DEPTH = choice([5,8,10,12, 14,14, 16, 18]);
@@ -272,10 +293,11 @@ function make_artwork(){
     RANDOM_OFFSET = choice([0,0,0,0,1,2,2,3,4,5])
     X.lineWidth=h/LINE_WIDTH;
     FEATURES_DICT = {
+        'Depth': DEPTH,
+//        'Palette': [0,1,2,3,4,5,6,7,8][PALETTE_INDEX],
+        'Composition': COMPOSITION_TYPE,
         'Outline': OUTLINE,
         'Line Width': LINE_WIDTH,
-        'Depth': DEPTH,
-        'Palette': [0,1,2,3,4,5,6,7,8][PALETTE_INDEX],
         'Random Offset': RANDOM_OFFSET,
         'Shrink': SHRINK,
     }
@@ -285,11 +307,9 @@ function make_artwork(){
         file_name += '_' + OUTLINE + ' outline';
         X.strokeStyle=OUTLINE;
     }
-
     console.table(FEATURES_DICT)
 //    Object.keys(FEATURES_DICT).map(k=>console.log(k, ' : ', FEATURES_DICT[k]))
-
-    subdivide(get_start_triangles());
+    subdivide(start_triangles);
     //alert(TO_DRAW.length);
 
     TO_DRAW.forEach(t=>{
