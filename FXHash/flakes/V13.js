@@ -1,8 +1,9 @@
 /*
 CHANGELOG V13
-- Use Color Palette 7 for now
+- Use Color Palette 7 only for now
 - remove the rounded corner frame
-- remove white outline (only no outline and black outline remain)
+- remove outline of each triangle
+
 - add initial composition property
 - add an extra initial composition type
 */
@@ -86,9 +87,6 @@ class Triangle {
         X.lineTo(...this.p3);
         X.closePath();
         X.fill();
-	    if (OUTLINE !== 'none'){
-            X.stroke();
-        }
     }
 
 //    draw_strokes(){
@@ -291,37 +289,34 @@ function make_artwork(){
     PALETTE_INDEX = 7;
     PALETTE = PALETTES[PALETTE_INDEX];
     RANDOM_OFFSET = choice([0,0,0,0,1,2,2,3,4,5])
+//    RANDOM_OFFSET=0;
     X.lineWidth=h/LINE_WIDTH;
     FEATURES_DICT = {
         'Depth': DEPTH,
 //        'Palette': [0,1,2,3,4,5,6,7,8][PALETTE_INDEX],
         'Composition': COMPOSITION_TYPE,
-        'Outline': OUTLINE,
         'Line Width': LINE_WIDTH,
         'Random Offset': RANDOM_OFFSET,
         'Shrink': SHRINK,
     }
     RANDOM_OFFSET = w * (RANDOM_OFFSET/1000);
     file_name = '_depth' + DEPTH.toString();
-    if (OUTLINE !== 'none'){
-        file_name += '_' + OUTLINE + ' outline';
-        X.strokeStyle=OUTLINE;
-    }
     console.table(FEATURES_DICT)
 //    Object.keys(FEATURES_DICT).map(k=>console.log(k, ' : ', FEATURES_DICT[k]))
     subdivide(start_triangles);
     //alert(TO_DRAW.length);
 
     TO_DRAW.forEach(t=>{
-        if (SHRINK!=='No'){
-            if (SHRINK=='Sometimes'){
-                if (R()<.3){
-                    t.shrink(R()*R())
-                }
-            } else {
-                t.shrink()
-            }
-        }
+//        if (SHRINK!=='No'){
+//            if (SHRINK=='Sometimes'){
+//                if (R()<.3){
+//                    t.shrink(R()*R())
+//                }
+//            } else {
+//                t.shrink()
+//            }
+//        }
+//        t.shrink(-.1+R()*.2)
         t.draw();
 //        t.draw_strokes()
     });
