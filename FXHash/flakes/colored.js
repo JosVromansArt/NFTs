@@ -44,6 +44,169 @@ function get_ngon_points(n, radius, xoff, yoff, rot){
     return points;
 }
 
+get_midpoint=(a,b)=>[(a[0] + b[0])/2,(a[1] + b[1])/2];
+
+class Triangle {
+    constructor(p1,p2,p3){
+        this.p1=p1;
+        this.p2=p2;
+        this.p3=p3;
+    }
+
+    shrink(shrink_perc=.07){
+        let m12 = get_midpoint(this.p1, this.p2);
+        let m23 = get_midpoint(this.p2, this.p3);
+        let m13 = get_midpoint(this.p1, this.p3);
+
+        let towards_m12 = get_point_on_line(this.p3, m12, shrink_perc);
+        let towards_m23 = get_point_on_line(this.p1, m23, shrink_perc);
+        let towards_m13 = get_point_on_line(this.p2, m13, shrink_perc);
+
+        this.p1 = towards_m23;
+        this.p2 = towards_m13;
+        this.p3 = towards_m12;
+    }
+
+    draw(){
+        X.fillStyle = hsl_to_str(...choice(PALETTE));
+        X.beginPath();
+        X.moveTo(...this.p1);
+        X.lineTo(...this.p2);
+        X.lineTo(...this.p3);
+        X.closePath();
+        X.fill();
+    }
+
+//    draw_strokes(){
+//        // find the sharpest angle, and start the perc_on_line from that angle.
+//        // inherit color from the parent. With a change to divert. So areas with the same color appear,
+//        // but also different palette/areas are possible
+//        let [a,b,c] = [this.p1, this.p2, this.p3]
+//        let color_index = 0;
+//        let fill_color = COLORS[color_index];
+//        X.lineWidth = w/8000;
+//        let perc1 = R();
+//        let perc2 = R();
+////        COLORS=choice(PALETTES).map(c=>hsl_to_str(...c))
+//        COLORS=PALETTES[PALETTE_INDEX].map(c=>hsl_to_str(...c))
+//
+//        for (let i=0; i<20000; i++){
+//            if (i%change_color_step===0){
+//                X.strokeStyle = COLORS[color_index % COLORS.length];
+//                color_index ++;
+//            }
+//            let start = get_point_on_line(a,b, perc1)
+////            if (same){
+//            perc2=perc1  // remove other values, only use same
+////            }
+//            let end = get_point_on_line(a,c, perc2)
+//
+//            // draw a single line
+//            X.beginPath();
+//            X.moveTo(...randomize_co(start));
+//            X.lineTo(...randomize_co(end));
+//            X.stroke();
+//
+//            perc1 += random_step();
+//            perc2 += random_step();
+//
+//            perc1 = Math.max(perc1, 0)
+//            perc2 = Math.max(perc2, 0)
+//            perc1 = Math.min(perc1, 1)
+//            perc2 = Math.min(perc2, 1)
+//        }
+//    }
+
+
+
+    // one triangle A,B,C is converted into a list of one or more triangles
+    subdivide(){
+        SUBDIV_COUNTER += 1;
+        let [a,b,c] = [this.p1, this.p2, this.p3];
+        let random_value = R();
+
+        a = randomize(a, RANDOM_OFFSET);  // TODO: make this depend on the triangle size (roughly)
+        b = randomize(b, RANDOM_OFFSET);
+        c = randomize(c, RANDOM_OFFSET);
+
+        let ab = get_midpoint(a,b);
+
+        if (random_value < .4){
+            let t1 = new Triangle(a, ab, c);
+            let t2 = new Triangle(b, ab, c);
+            return [t1,t2]
+        }
+        else if (random_value < .75){
+            let cab = get_midpoint(ab,c);
+
+            let tr1 = new Triangle(a, ab, cab)
+            let tr2 = new Triangle(b,  ab, cab)
+            let tr3 = new Triangle(a, c, cab)
+            let tr4 = new Triangle(b,  c, cab)
+            return [tr1, tr2, tr3, tr4];
+        }
+
+        return [this]; // return the original triangle
+    }
+}
+
+
+COMPOSITION_TYPE = 'unknown'
+function get_start_triangles(){
+    let random_value = R();
+
+    let A = [0,0];
+    let B = [w,0];
+    let C = [w,h];
+    let D = [0,h];
+
+    if (random_value < .2){
+        let BC = get_midpoint(B,C);
+        let DA = get_midpoint(D,A);
+        let BBC = get_midpoint(B, BC);
+        let DAD = get_midpoint(DA, D);
+
+        COMPOSITION_TYPE = 'Z'
+        return [
+            new Triangle(A, B, BBC),
+            new Triangle(BBC, A, DAD),
+            new Triangle(BBC, C, DAD),
+            new Triangle(DAD,D,C),
+        ]
+
+
+    } else if (random_value < .3){
+        COMPOSITION_TYPE = 'A'
+        return [
+            new Triangle(A, B, C),
+            new Triangle(C, A, D),
+        ]
+    } else if (random_value < .66){
+        COMPOSITION_TYPE = 'B'
+        let BC = get_midpoint(B,C);
+        let DA = get_midpoint(D,A);
+
+        return [
+            new Triangle(A, B, BC),
+            new Triangle(BC, A, DA),
+            new Triangle(DA, BC, D),
+            new Triangle(BC, D,C),
+        ]
+    }
+    let DA = get_midpoint(D,A);
+    let DAB = get_midpoint(DA, B);
+    COMPOSITION_TYPE = 'C'
+    return [
+        new Triangle(A, B, DA),
+        new Triangle(B, DAB, C),
+        new Triangle(DAB, C, DA),
+        new Triangle(DA, C, D),
+    ];
+}
+
+
+START_TRIANGLES = get_start_triangles();
+
 X.globalAlpha=.4;
 X.globalCompositeOperation='multiply';
 
@@ -66,8 +229,6 @@ function get_distance(pointA, pointB){
     // dont take the square root, because we only compare distance, so rooting is not necessary, the order stays the same
     return diffX ** 2 + diffY ** 2
 }
-
-
 
 
 
@@ -169,9 +330,13 @@ function subdivide(a,b,c,depth=0, previous_hue=180){
 pA = [0,0];
 pB = [0,h];
 pC = [w,0];
-TRIANGLE = [pA,pB,pC];
-subdivide(pA,pB,pC, 0, START_HUE)
-subdivide(pB,pC, [w,h], 0, START_HUE+64)
+//TRIANGLE = [pA,pB,pC];
+
+
+START_TRIANGLES.forEach(t=>subdivide(t.p1, t.p2, t.p3, 0, START_HUE+=64))
+
+//subdivide(pA,pB,pC, 0, START_HUE)
+//subdivide(pB,pC, [w,h], 0, START_HUE+64)
 
 
 //
