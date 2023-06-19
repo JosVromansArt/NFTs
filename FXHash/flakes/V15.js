@@ -2,6 +2,7 @@
 CHANGELOG V15
 - Define more compositions, including grid & distored grid
 - Second subdivision type, called 'New' for now
+- Monochrome variation with lines only
 
 (TODO):
 - Add all useful things on the Triangle class
@@ -317,9 +318,11 @@ fill_polygon=(vertices, fill_color, outline_hue)=>{
         X.lineTo(...vertices[k]);
     }
     X.closePath();
-    X.fill();
+    !MONOCHROME&&X.fill();
+
+    X.globalAlpha=MONOCHROME?.5:1;
     if (outline_hue){  // investigate this, could be without the hue
-        X.strokeStyle=hsl_to_str(outline_hue,60,20)
+        X.strokeStyle=MONOCHROME?'black':hsl_to_str(outline_hue,60,20);
         X.stroke();
     }
 }
@@ -346,8 +349,6 @@ function subdivide_trio(a,b,c,depth=0, previous_hue=180){
 function make_artwork(){
     SUBDIV_COUNTER = 0;
     TO_DRAW = [];
-    X.fillStyle='#000';
-    X.fillRect(0,0,w,h);
 
     //
     // SET FEATURES
@@ -357,7 +358,13 @@ function make_artwork(){
     LINE_WIDTH = choice([1000, 2000, 3000, 4000, 6000, 8000]);
     DEPTH = choice([5,8,10,12, 14,14, 16, 18]);
     COMPOSITION_TYPE = choice([0,1,2,3,4,5])
-    SUBDIVISION_TYPE = choice(['Original', 'New'])
+    SUBDIVISION_TYPE = choice(['Original', 'New', 'New'])
+
+    MONOCHROME=false;
+    if (SUBDIVISION_TYPE==='New' && R()>.7){
+        MONOCHROME=true;
+    }
+
 
 //    RANDOM_OFFSET = choice([0,0,0,0,1,2,2,3,4,5])
 //    SHRINK = choice(['Constant', 'No', 'Sometimes'])
@@ -367,6 +374,10 @@ function make_artwork(){
     PALETTE_INDEX = 7;
     PALETTE = PALETTES[PALETTE_INDEX];
 
+    X.globalAlpha=1;
+    X.fillStyle=MONOCHROME?'#fff':'#000';
+    X.fillRect(0,0,w,h);
+
     X.lineWidth=h/LINE_WIDTH;
     FEATURES_DICT = {
         'Depth': DEPTH,
@@ -374,6 +385,7 @@ function make_artwork(){
         'Composition': ['0 - Z', '1 - grid', '2 - grid (distorted)', '3 - A', '4 - B', '5 - C'][COMPOSITION_TYPE],
         'Subdivision Type': SUBDIVISION_TYPE,
         'Line Width': LINE_WIDTH,
+        'Monochrome': MONOCHROME,
 //        'Random Offset': RANDOM_OFFSET,
 //        'Shrink': SHRINK,
     }
