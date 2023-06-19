@@ -1,7 +1,17 @@
 /*
 CHANGELOG V15
 - Define more compositions, including grid & distored grid
-- Add second subdivision type (TODO)
+
+(TODO):
+- Add all useful things on the Triangle class
+- Add second subdivision type, and review coloring with Hue instead of hex, and give the 3 areas similar hue
+- set canvas size to fixed dimensions 3000*2000 or so
+
+- To do when finishing up:
+- save image should be PNG
+- rename features
+- add setting that genrates plottable SVG
+
 */
 //C=document.getElementById('C');
 W=window;
@@ -128,14 +138,14 @@ class Triangle {
 
 
     // one triangle A,B,C is converted into a list of one or more triangles
-    subdivide_dual(){
+    subdivide(){
         SUBDIV_COUNTER += 1;
         let [a,b,c] = [this.p1, this.p2, this.p3];
         let random_value = R();
 
-        a = randomize(a, RANDOM_OFFSET);  // TODO: make this depend on the triangle size (roughly)
-        b = randomize(b, RANDOM_OFFSET);
-        c = randomize(c, RANDOM_OFFSET);
+//        a = randomize(a, RANDOM_OFFSET);  // TODO: make this depend on the triangle size (roughly)
+//        b = randomize(b, RANDOM_OFFSET);
+//        c = randomize(c, RANDOM_OFFSET);
 
         let ab = get_midpoint(a,b);
 
@@ -157,7 +167,7 @@ class Triangle {
         return [this]; // return the original triangle
     }
 
-    subdivide(){  // in three
+    subdivide_trio(){  // in three
 
 
     }
@@ -338,22 +348,25 @@ function make_artwork(){
 //    OUTLINE='none';  // TODO: check outline, on different zoom levels
     LINE_WIDTH = choice([1000, 2000, 3000, 4000, 6000, 8000]);
     DEPTH = choice([5,8,10,12, 14,14, 16, 18]);
-    SHRINK = choice(['Constant', 'No', 'Sometimes'])
-//    SHRINK = 'no';
+
+
+//    RANDOM_OFFSET = choice([0,0,0,0,1,2,2,3,4,5])
+//    SHRINK = choice(['Constant', 'No', 'Sometimes'])
+    SHRINK = 'no';
+    RANDOM_OFFSET=0;
 
     PALETTE_INDEX = choice([0,1,2,3,4,5,6,7,8])
     PALETTE_INDEX = 7;
     PALETTE = PALETTES[PALETTE_INDEX];
-    RANDOM_OFFSET = choice([0,0,0,0,1,2,2,3,4,5])
-//    RANDOM_OFFSET=0;
+
     X.lineWidth=h/LINE_WIDTH;
     FEATURES_DICT = {
         'Depth': DEPTH,
 //        'Palette': [0,1,2,3,4,5,6,7,8][PALETTE_INDEX],
         'Composition': ['0 - Z', '1 - grid', '2 - grid (distorted)', '3 - A', '4 - B', '5 - C'][COMPOSITION_TYPE],
-        'Line Width': LINE_WIDTH,
-        'Random Offset': RANDOM_OFFSET,
-        'Shrink': SHRINK,
+//        'Line Width': LINE_WIDTH,
+//        'Random Offset': RANDOM_OFFSET,
+//        'Shrink': SHRINK,
     }
     RANDOM_OFFSET = w * (RANDOM_OFFSET/1000);
     file_name = '_depth' + DEPTH.toString();
@@ -363,20 +376,10 @@ function make_artwork(){
     //alert(TO_DRAW.length);
 
     TO_DRAW.forEach(t=>{
-//        if (SHRINK!=='No'){
-//            if (SHRINK=='Sometimes'){
-//                if (R()<.3){
-//                    t.shrink(R()*R())
-//                }
-//            } else {
-//                t.shrink()
-//            }
-//        }
 //        t.shrink(-.1+R()*.2)
         t.draw();
 //        t.draw_strokes()
     });
-//    do_blur();  // will add rounded corner frame
 
     //alert(SUBDIV_COUNTER);
     console.log('DONE')
