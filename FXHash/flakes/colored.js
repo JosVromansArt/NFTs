@@ -160,7 +160,7 @@ function get_start_triangles(){
     let C = [w,h];
     let D = [0,h];
 
-    if (random_value < .2){
+    if (random_value < .1){
         let BC = get_midpoint(B,C);
         let DA = get_midpoint(D,A);
         let BBC = get_midpoint(B, BC);
@@ -173,6 +173,59 @@ function get_start_triangles(){
             new Triangle(BBC, C, DAD),
             new Triangle(DAD,D,C),
         ]
+
+    } else if (random_value<.2){
+        // distorted grid
+//        alert('YEAH')
+        let rows = 2+R()*5|0;
+        let cols = 2+R()*5|0;
+        rows=4
+        cols=5
+
+        let stepx = w/cols;
+        let stepy = h/rows;
+
+        let xoff = 0;//stepx/3;  // TODO: can be distorted or not
+        let yoff = 0;//stepy/3;
+
+        console.log(rows, cols, stepx, stepy)
+
+        let trigs = []
+        let coords=[]
+        for (let i=0;i<=cols;i++){
+            let coords_row = []
+            for (let j=0;j<=rows;j++){
+                coords_row.push([
+                    (i===0||i===cols)?i*stepx:i*stepx+R()*xoff*2-xoff,
+                    (j===0||j===rows)?j*stepy:j*stepy+R()*yoff*2-yoff,
+                ])
+
+//                let x0 = i*stepx + R()*xoff*2-xoff;
+//                let x1 = (i+1)*stepx;
+//                let y0 = j*stepy;
+//                let y1 = (j+1)*stepy;
+//
+//                trigs.push(new Triangle([x0,y0],[x1,y0], [x1,y1]))
+//                trigs.push(new Triangle([x0,y0],[x1,y1], [x0,y1]))
+            }
+            coords.push(coords_row);
+        }
+
+        console.log(coords);
+
+        for (let i=0;i<cols;i++){
+            for (let j=0;j<rows;j++){
+                trigs.push(new Triangle(coords[i][j], coords[i+1][j], coords[i+1][j+1]))
+                trigs.push(new Triangle(coords[i][j], coords[i+1][j+1], coords[i][j+1]))
+//                trigs.push(new Triangle([x0,y0],[x1,y1], [x0,y1]))
+            }
+        }
+
+
+        return trigs
+
+
+
 
 
     } else if (random_value < .3){
@@ -357,8 +410,6 @@ pA = [0,0];
 pB = [0,h];
 pC = [w,0];
 //TRIANGLE = [pA,pB,pC];
-
-
 START_TRIANGLES.forEach(t=>subdivide(t.p1, t.p2, t.p3, 0, START_HUE+=64))
 
 //subdivide(pA,pB,pC, 0, START_HUE)
