@@ -1,10 +1,11 @@
 /*
 CHANGELOG V15
 - Define more compositions, including grid & distored grid
+- Second subdivision type, called 'New' for now
 
 (TODO):
 - Add all useful things on the Triangle class
-- Add second subdivision type, and review coloring with Hue instead of hex, and give the 3 areas similar hue
+- review coloring with Hue instead of hex, and give the 3 areas similar hue
 - set canvas size to fixed dimensions 3000*2000 or so
 
 - To do when finishing up:
@@ -53,6 +54,11 @@ get_point_on_line=(a,b,perc)=>{
     let diffX = perc * (b[0] - a[0]);
     let diffY = perc * (b[1] - a[1]);
     return [a[0] + diffX, a[1] + diffY]
+}
+function get_point_on_line_relative(a,b,perc){  // relative to a !!
+    let diffX = perc * (b[0] - a[0]);
+    let diffY = perc * (b[1] - a[1]);
+    return [diffX,diffY]
 }
 randomize=(xy, factor=10)=>{
     if (!xy[1]){return xy}
@@ -154,12 +160,13 @@ class Triangle {
     subdivide(){
         SUBDIV_COUNTER += 1;
         let [a,b,c] = [this.p1, this.p2, this.p3];
+//        let rrrr = R();  investigate this
+//        if (rrrr<.33){
+//            [a,b,c] = [this.p2, this.p3, this.p1];
+//        } else if (rrrr<.66){
+//            [a,b,c] = [this.p3, this.p1, this.p2];
+//        }
         let random_value = R();
-
-//        a = randomize(a, RANDOM_OFFSET);  // TODO: make this depend on the triangle size (roughly)
-//        b = randomize(b, RANDOM_OFFSET);
-//        c = randomize(c, RANDOM_OFFSET);
-
         let ab = get_midpoint(a,b);
 
         if (random_value < .4){
@@ -177,56 +184,21 @@ class Triangle {
             return [tr1, tr2, tr3, tr4];
         }
 
-        return [this]; // return the original triangle
+        return [this]; // return the original triangle, so in some cases, no subdivision happened
     }
-
-    subdivide_trio(){  // in three
-
-
-    }
-
 }
-
-function subdivide(triangle_list, depth=0){
+function subdivide_original(triangle_list, depth=0){
     let next_tri_list = []
     for (let i=0;i<triangle_list.length;i++){
         next_tri_list = next_tri_list.concat(triangle_list[i].subdivide());
     }
     if (depth < DEPTH){
-        subdivide(next_tri_list, depth+choice([1,2,3,5,5,5,5,6,8,8]));
+        subdivide_original(next_tri_list, depth+choice([1,2,3,5,5,5,5,6,8,8]));
     } else {
         console.log(next_tri_list.length)
         TO_DRAW = TO_DRAW.concat(next_tri_list);
     }
 }
-function subdivide_trio(a,b,c,depth=0, previous_hue=180){
-    let inside = random_in_triangle(a,b,c)
-
-//    BSIZE = 10
-//    X.fillStyle='black'
-//    X.fillRect(inside[0]-BSIZE/2, inside[1]-BSIZE/2, BSIZE,BSIZE)
-
-    if (depth>8 || (depth>1&&R()<.2)){
-        handle_final(a,b,c,inside, previous_hue)
-        return
-    }
-
-    subdivide(inside, a,b, depth+1, PALETTE[R()*PALETTE.length|0][0] )
-    subdivide(inside, b,c, depth+1, PALETTE[R()*PALETTE.length|0][0] )
-    subdivide(inside, c,a, depth+1, PALETTE[R()*PALETTE.length|0][0] )
-
-//    subdivide(inside, a,b, depth+1, previous_hue+R()*64-32|0)  // previous_hue+R()*64-32|0
-//    subdivide(inside, b,c, depth+1, previous_hue+R()*64-32|0)
-//    subdivide(inside, c,a, depth+1, previous_hue+R()*64-32|0)
-//
-//    return [
-//        [inside, a,b],
-//        [inside, b,c],
-//        [inside, c,a],
-//    ]
-}
-
-
 
 
 function get_start_triangles(ct){
@@ -252,8 +224,8 @@ function get_start_triangles(ct){
         // distorted grid
         let rows = 2+R()*5|0;
         let cols = 2+R()*5|0;
-        rows=4;
-        cols=5;
+        rows=3+R()*6|0;
+        cols=rows-2+ R()*4|0;
 
         let stepx = w/cols;
         let stepy = h/rows;
@@ -280,8 +252,15 @@ function get_start_triangles(ct){
         }
         for (let i=0;i<cols;i++){
             for (let j=0;j<rows;j++){
-                trigs.push(new Triangle(coords[i][j], coords[i+1][j], coords[i+1][j+1]))
-                trigs.push(new Triangle(coords[i][j], coords[i+1][j+1], coords[i][j+1]))
+                let [a,b,c,d] = [coords[i][j], coords[i+1][j], coords[i+1][j+1],coords[i][j+1]]
+
+                if (R()<.5){
+                    trigs.push(new Triangle(a,b,c))
+                    trigs.push(new Triangle(a,c,d))
+                } else {
+                    trigs.push(new Triangle(a,b,d))
+                    trigs.push(new Triangle(b,d,c))
+                }
             }
         }
         return trigs;
@@ -314,6 +293,55 @@ function get_start_triangles(ct){
 }
 
 
+function random_in_triangle(a,b,c){
+    let perc1 = 0.2+R()*.6;
+
+    let maxrange = 1-perc1;
+    let perc2 = R() * maxrange * .8 + maxrange*.1;
+
+    let P1 = get_point_on_line_relative(a,b,perc1)
+    let P2 = get_point_on_line_relative(a,c,perc2)
+    return [
+        a[0]+P1[0]+P2[0],
+        a[1]+P1[1]+P2[1]
+    ]
+}
+START_HUE = R()*360|0;
+fill_polygon=(vertices, fill_color, outline_hue)=>{
+    // Use the vertex indices, and get the according vertices from SCALED_VERTICES
+    X.fillStyle = fill_color;
+    X.beginPath();
+    X.moveTo(...vertices[0]);
+
+    for (let k=1;k<vertices.length;k++){
+        X.lineTo(...vertices[k]);
+    }
+    X.closePath();
+    X.fill();
+    if (outline_hue){  // investigate this, could be without the hue
+        X.strokeStyle=hsl_to_str(outline_hue,60,20)
+        X.stroke();
+    }
+}
+handle_final=(a,b,c,inside, hue)=>{
+    fill_polygon([a,inside, b], hsl_to_str(hue,60,42), hue)
+    fill_polygon([a,inside,c], hsl_to_str(hue,60,60), hue)
+    fill_polygon([inside,b,c], hsl_to_str(hue,60,78), hue)
+}
+
+function subdivide_trio(a,b,c,depth=0, previous_hue=180){
+    let inside = random_in_triangle(a,b,c)
+
+    PALETTE = [[0, 0, 2],[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]]
+
+    if (depth>6 || (depth>1&&R()<.2)){
+        handle_final(a,b,c,inside, previous_hue)
+        return
+    }
+    subdivide_trio(inside, a,b, depth+1, PALETTE[R()*PALETTE.length|0][0] )
+    subdivide_trio(inside, b,c, depth+1, PALETTE[R()*PALETTE.length|0][0] )
+    subdivide_trio(inside, c,a, depth+1, PALETTE[R()*PALETTE.length|0][0] )
+}
 
 function make_artwork(){
     SUBDIV_COUNTER = 0;
@@ -329,6 +357,7 @@ function make_artwork(){
     LINE_WIDTH = choice([1000, 2000, 3000, 4000, 6000, 8000]);
     DEPTH = choice([5,8,10,12, 14,14, 16, 18]);
     COMPOSITION_TYPE = choice([0,1,2,3,4,5])
+    SUBDIVISION_TYPE = choice(['Original', 'New'])
 
 //    RANDOM_OFFSET = choice([0,0,0,0,1,2,2,3,4,5])
 //    SHRINK = choice(['Constant', 'No', 'Sometimes'])
@@ -343,6 +372,7 @@ function make_artwork(){
         'Depth': DEPTH,
 //        'Palette': [0,1,2,3,4,5,6,7,8][PALETTE_INDEX],
         'Composition': ['0 - Z', '1 - grid', '2 - grid (distorted)', '3 - A', '4 - B', '5 - C'][COMPOSITION_TYPE],
+        'Subdivision Type': SUBDIVISION_TYPE,
         'Line Width': LINE_WIDTH,
 //        'Random Offset': RANDOM_OFFSET,
 //        'Shrink': SHRINK,
@@ -352,14 +382,17 @@ function make_artwork(){
     console.table(FEATURES_DICT)
 
     let start_triangles = get_start_triangles(COMPOSITION_TYPE);
-    subdivide(start_triangles);
-    //alert(TO_DRAW.length);
 
-    TO_DRAW.forEach(t=>{
-//        t.shrink(-.1+R()*.2)
-        t.draw();
-//        t.draw_strokes()
-    });
+    if (SUBDIVISION_TYPE==='New'){
+        start_triangles.forEach(t=>subdivide_trio(t.p1, t.p2, t.p3, 0, START_HUE+=64))
+    } else {
+        subdivide_original(start_triangles)
+        TO_DRAW.forEach(t=>{
+    //        t.shrink(-.1+R()*.2)
+            t.draw();
+    //        t.draw_strokes()
+        });
+    }
 
     //alert(SUBDIV_COUNTER);
     console.log('DONE')
