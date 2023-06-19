@@ -27,7 +27,6 @@ C.style.height=`${h}px`;
 X=C.getContext('2d');
 X.scale(pR,pR);
 
-//fxrand = sfc32(-2136503300, 630882256, -787179168, -1446271431);  // check outline with this one
 R=fxrand;
 randomInt=(a, b)=>Math.floor(a + (b - a) * R());
 choice=(x)=>x[randomInt(0, x.length * 0.99)];
@@ -83,6 +82,20 @@ class Triangle {
         this.p1 = towards_m23;
         this.p2 = towards_m13;
         this.p3 = towards_m12;
+    }
+
+    random_point_inside(){
+        let perc1 = 0.2+R()*.6;
+        let maxrange = 1-perc1;
+        let perc2 = R() * maxrange * .8 + maxrange*.1;
+
+        let P1 = get_point_on_line(this.p1,this.p2,perc1)
+        let P2 = get_point_on_line(this.p1,this.p3,perc2)
+
+        return [
+            this.p1[0]+P1[0]+P2[0],
+            this.p1[1]+P1[1]+P2[1]
+        ]
     }
 
     draw(){
@@ -174,33 +187,6 @@ class Triangle {
 
 }
 
-function random_in_triangle(a,b,c){
-    let perc1 = 0.2+R()*.6;
-
-    let maxrange = 1-perc1;
-    let perc2 = R() * maxrange * .8 + maxrange*.1;
-
-//    console.log('total less than 1 :')
-//    console.log(perc1, perc2, perc1+perc2)
-
-    let P1 = get_point_on_line(a,b,perc1)
-    let P2 = get_point_on_line(a,c,perc2)
-
-    return [
-        a[0]+P1[0]+P2[0],
-        a[1]+P1[1]+P2[1]
-    ]
-}
-
-
-//function transform_color(triangle, d1=0, d2=0, d3=0){
-//    if (triangle.color === undefined){
-//        return [0,80,40];
-//    }
-//
-//    return [triangle.color[0] + d1, triangle.color[1] + d2,  triangle.color[2] + d3]
-//}
-
 function subdivide(triangle_list, depth=0){
     let next_tri_list = []
     for (let i=0;i<triangle_list.length;i++){
@@ -213,48 +199,43 @@ function subdivide(triangle_list, depth=0){
         TO_DRAW = TO_DRAW.concat(next_tri_list);
     }
 }
+function subdivide_trio(a,b,c,depth=0, previous_hue=180){
+    let inside = random_in_triangle(a,b,c)
 
-//function draw_frame_rounded_corners(r, margin){
-//    X.fillStyle = "#000";
-//    X.beginPath();
+//    BSIZE = 10
+//    X.fillStyle='black'
+//    X.fillRect(inside[0]-BSIZE/2, inside[1]-BSIZE/2, BSIZE,BSIZE)
+
+    if (depth>8 || (depth>1&&R()<.2)){
+        handle_final(a,b,c,inside, previous_hue)
+        return
+    }
+
+    subdivide(inside, a,b, depth+1, PALETTE[R()*PALETTE.length|0][0] )
+    subdivide(inside, b,c, depth+1, PALETTE[R()*PALETTE.length|0][0] )
+    subdivide(inside, c,a, depth+1, PALETTE[R()*PALETTE.length|0][0] )
+
+//    subdivide(inside, a,b, depth+1, previous_hue+R()*64-32|0)  // previous_hue+R()*64-32|0
+//    subdivide(inside, b,c, depth+1, previous_hue+R()*64-32|0)
+//    subdivide(inside, c,a, depth+1, previous_hue+R()*64-32|0)
 //
-//    x=margin;
-//    y=margin;
-//    ww=w-2*margin;
-//    hh=h-2*margin;
-//
-//    X.beginPath();
-//    X.moveTo(x+r, y);
-//    X.arcTo(x+ww, y,   x+ww, y+hh, r);
-//    X.arcTo(x+ww, y+hh, x,   y+hh, r);
-//    X.arcTo(x,   y+hh, x,   y,   r);
-//    X.arcTo(x,   y,   x+ww, y,   r);
-//    X.closePath();
-//
-//    X.rect(w, 0, -w, h);
-//    X.fill();
-//}
-//function do_blur(){
-//    // original blur was /18 instead of 28
-//    r = w/28;  // corner radius
-////    X.filter='blur('+parseInt(w/150)+'px)'
-//    draw_frame_rounded_corners(r, margin=r/1.1);
-//
-//    X.filter='none'
-//    draw_frame_rounded_corners(r, margin=r/3.9);
-//}
-
-COMPOSITION_TYPE = choice([0,1,2,3,4,5])
+//    return [
+//        [inside, a,b],
+//        [inside, b,c],
+//        [inside, c,a],
+//    ]
+}
 
 
 
-function get_start_triangles(){
+
+function get_start_triangles(ct){
     let A = [0,0];
     let B = [w,0];
     let C = [w,h];
     let D = [0,h];
 
-    if (COMPOSITION_TYPE === 0){
+    if (ct === 0){
         let BC = get_midpoint(B,C);
         let DA = get_midpoint(D,A);
         let BBC = get_midpoint(B, BC);
@@ -267,7 +248,7 @@ function get_start_triangles(){
             new Triangle(DAD,D,C),
         ]
 
-    } else if (COMPOSITION_TYPE < 3){
+    } else if (ct < 3){
         // distorted grid
         let rows = 2+R()*5|0;
         let cols = 2+R()*5|0;
@@ -305,12 +286,12 @@ function get_start_triangles(){
         }
         return trigs;
 
-    } else if (COMPOSITION_TYPE === 3){
+    } else if (ct === 3){
         return [
             new Triangle(A, B, C),
             new Triangle(C, A, D),
         ]
-    } else if (COMPOSITION_TYPE === 4){
+    } else if (ct === 4){
         let BC = get_midpoint(B,C);
         let DA = get_midpoint(D,A);
 
@@ -339,7 +320,6 @@ function make_artwork(){
     TO_DRAW = [];
     X.fillStyle='#000';
     X.fillRect(0,0,w,h);
-    let start_triangles = get_start_triangles();
 
     //
     // SET FEATURES
@@ -348,14 +328,13 @@ function make_artwork(){
 //    OUTLINE='none';  // TODO: check outline, on different zoom levels
     LINE_WIDTH = choice([1000, 2000, 3000, 4000, 6000, 8000]);
     DEPTH = choice([5,8,10,12, 14,14, 16, 18]);
-
+    COMPOSITION_TYPE = choice([0,1,2,3,4,5])
 
 //    RANDOM_OFFSET = choice([0,0,0,0,1,2,2,3,4,5])
 //    SHRINK = choice(['Constant', 'No', 'Sometimes'])
+//    PALETTE_INDEX = choice([0,1,2,3,4,5,6,7,8])
     SHRINK = 'no';
     RANDOM_OFFSET=0;
-
-    PALETTE_INDEX = choice([0,1,2,3,4,5,6,7,8])
     PALETTE_INDEX = 7;
     PALETTE = PALETTES[PALETTE_INDEX];
 
@@ -364,14 +343,15 @@ function make_artwork(){
         'Depth': DEPTH,
 //        'Palette': [0,1,2,3,4,5,6,7,8][PALETTE_INDEX],
         'Composition': ['0 - Z', '1 - grid', '2 - grid (distorted)', '3 - A', '4 - B', '5 - C'][COMPOSITION_TYPE],
-//        'Line Width': LINE_WIDTH,
+        'Line Width': LINE_WIDTH,
 //        'Random Offset': RANDOM_OFFSET,
 //        'Shrink': SHRINK,
     }
     RANDOM_OFFSET = w * (RANDOM_OFFSET/1000);
     file_name = '_depth' + DEPTH.toString();
     console.table(FEATURES_DICT)
-//    Object.keys(FEATURES_DICT).map(k=>console.log(k, ' : ', FEATURES_DICT[k]))
+
+    let start_triangles = get_start_triangles(COMPOSITION_TYPE);
     subdivide(start_triangles);
     //alert(TO_DRAW.length);
 
