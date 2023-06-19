@@ -267,6 +267,26 @@ function random_in_triangle(a,b,c){
 //draw_triangle(pA,pB,pC)
 //inside = random_in_triangle(pA,pB,pC)
 
+
+// recursively draw division lines
+draw_y=(a,b,c, iter=0,color='#000')=>{
+    let inside = random_in_triangle(a,b,c);
+
+    X.globalAlpha=1;
+    draw_line(a, inside, color, 1)
+    draw_line(b, inside, color, 1)
+    draw_line(c, inside, color, 1)
+
+    X.globalAlpha=.05;
+    X.lineWidth=.6;
+
+    if (iter<2){
+        draw_y(a,b,inside,iter+1);
+        draw_y(b,c,inside,iter+1);
+        draw_y(c,a,inside,iter+1);
+    }
+}
+
 START_HUE = R()*360|0;
 
 fill_polygon=(vertices, fill_color, outline_hue)=>{
@@ -286,6 +306,12 @@ fill_polygon=(vertices, fill_color, outline_hue)=>{
         X.strokeStyle=hsl_to_str(outline_hue,80,80)
         X.stroke();
     }
+
+
+    // draw black lines on large triangles
+//    if (Math.abs(vertices[0][0]-vertices[1][0])>100){
+//        draw_y(...vertices);
+//    }
 }
 
 handle_final=(a,b,c,inside, hue)=>{
