@@ -9,12 +9,6 @@ R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S
 TEXTURE = true;  // if false, fill a rectangle with the single color, for faster test rendering
 
 
-W=window;
-//w=W.innerWidth;
-//h=W.innerHeight;
-w=1000;
-h=1500;
-
 W=1000;
 H=1500;
 RATIO = W/H;
@@ -33,20 +27,15 @@ C.height = H;
 C.style.width=`${W*SCALE}px`;
 C.style.height=`${H*SCALE}px`;
 
-//C.style.width=`${w}px`;
-//C.style.height=`${h}px`;
 X=C.getContext('2d');
-//X.scale(pR,pR);
-
 X.fillStyle='#fff';
-X.fillRect(0,0,w,h);
+X.fillRect(0,0,W,H);
 X.globalAlpha=.02;
 X.globalCompositeOperation='multiply';
 
 A=window.requestAnimationFrame;
 
 PAUSED=false;
-M=w*.9;
 DEPTH=1;
 
 
@@ -137,9 +126,9 @@ function get_start_triangles(){
     let random_value = R();
 
     let A = [0,0];
-    let B = [w,0];
-    let C = [w,h];
-    let D = [0,h];
+    let B = [W,0];
+    let C = [W,H];
+    let D = [0,H];
 
     if (random_value < .1){
         let BC = get_midpoint(B,C);
@@ -284,8 +273,8 @@ function subdivide(a,b,c,depth=0, previous_hue=180){
 
 
 pA = [0,0];
-pB = [0,h];
-pC = [w,0];
+pB = [0,H];
+pC = [W,0];
 //TRIANGLE = [pA,pB,pC];
 START_TRIANGLES.forEach(t=>subdivide(t.p1, t.p2, t.p3, 0, START_HUE+=64))
 
@@ -591,7 +580,7 @@ FINAL_TRIGS.forEach(trig=>{
 T=_=>{
     WALKS.forEach(walk=>walk.fillFrame())
     FRAME_COUNTER ++;
-    document.title = `Flakes ${(FRAME_COUNTER/MAX_FRAMES*100|0)}%`
+    document.title = `${PAUSED?'[Paused]':'Flakes'} ${(FRAME_COUNTER/MAX_FRAMES*100|0)}%`
     if (!PAUSED&&FRAME_COUNTER<MAX_FRAMES){A(T)}
 }
 
