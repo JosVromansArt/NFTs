@@ -1,61 +1,41 @@
-seed=Math.random()*99999999999|0;
-//seed=1341511254;
-console.log(seed, 'seed');
+SEED=Math.random()*99999999999|0;
+SEED = -1338485593;
+console.log(SEED, 'seed');
 S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
-[...seed+'ThxPiter'].map(c=>R(S[0]^=c.charCodeAt()*S[3]));
+[...SEED+'ThxPiter'].map(c=>R(S[0]^=c.charCodeAt()*S[3]));
 
-
-TEXTURE = true;  // if false, fill a rectangle with the single color, for faster test rendering
-
-
-W=1000;
-H=1500;
-RATIO = W/H;
+C.width=W=1200;
+C.height=H=1800;
+//RATIO = 2/3;  // 1200x1800
 WW=window.innerWidth;
 WH=window.innerHeight;
-WINDOW_RATIO = WW/WH;
-// the scale will depend on the longest or shortest side, depending how it fits the current window
-if (WINDOW_RATIO>RATIO){
-    SCALE = WH/H
-} else {
-    SCALE = WW/W
-}
-
-C.width  = W;
-C.height = H;
+SCALE = (WW/WH>2/3)?WH/H:WW/W;  // the scale will depend on the longest or shortest side, depending how it fits the current window
 C.style.width=`${W*SCALE}px`;
 C.style.height=`${H*SCALE}px`;
 
 X=C.getContext('2d');
 X.fillStyle='#fff';
 X.fillRect(0,0,W,H);
+
 X.globalAlpha=.02;
 X.globalCompositeOperation='multiply';
 
-A=window.requestAnimationFrame;
 
+A=window.requestAnimationFrame;
 PAUSED=false;
 DEPTH=1;
+TEXTURE = true;  // if false, fill a rectangle with the single color, for faster test rendering
 
 
 PALETTE = [[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]]
 function hsl_to_str(h,s,l,a=1){return 'hsl(' + h + ',' + s + '%,' + l + '%,' + a + ')';}
 //PALETTE = PALETTE.map(c=>hsl_to_str(...c))
-
-
-VERTEX_COUNT = 4+ R()*20|0;
-
-function get_ngon_points(n, radius, xoff, yoff, rot){
-    let phi = 2 * 3.14159265 / n;
-    let points = [];
-    for (let j=0; j<n; j++){
-        points.push([Math.sin(phi * j + rot * 2) * radius + xoff, Math.cos(phi * j + rot) * radius + yoff]);
-    }
-    return points;
-}
-
 get_midpoint=(a,b)=>[(a[0] + b[0])/2,(a[1] + b[1])/2];
+
+
+COMPOSITION_TYPE = 'unknown';
+
 
 class Triangle {
     constructor(p1,p2,p3){
@@ -120,8 +100,6 @@ class Triangle {
 }
 
 
-
-COMPOSITION_TYPE = 'unknown'
 function get_start_triangles(){
     let random_value = R();
 
@@ -577,15 +555,31 @@ FINAL_TRIGS.forEach(trig=>{
 })
 
 
-T=_=>{
-    WALKS.forEach(walk=>walk.fillFrame())
-    FRAME_COUNTER ++;
-    document.title = `${PAUSED?'[Paused]':'Flakes'} ${(FRAME_COUNTER/MAX_FRAMES*100|0)}%`
-    if (!PAUSED&&FRAME_COUNTER<MAX_FRAMES){A(T)}
+if (TEXTURE){
+    T=_=>{
+        WALKS.forEach(walk=>walk.fillFrame())
+        FRAME_COUNTER ++;
+        document.title = `${PAUSED?'[Paused]':'Flakes'} ${(FRAME_COUNTER/MAX_FRAMES*100|0)}%`
+        if (!PAUSED&&FRAME_COUNTER<MAX_FRAMES){A(T)}
+    }
+
+
+    A(T);
+} else {
+    X.globalAlpha=1;
+
+    FINAL_TRIGS.forEach(trig=>{
+        let a = [trig[0], trig[1]];
+        let b = [trig[2], trig[3]];
+        let c = [trig[4], trig[5]];
+        let inside = trig[6];
+        let hue = trig[7]
+
+        fill_polygon([a,inside, b], hsl_to_str(hue,60,40), hue)
+        fill_polygon([a,inside,c], hsl_to_str(hue,60,60), hue)
+        fill_polygon([inside,b,c], hsl_to_str(hue,60,80), hue)
+    })
 }
-
-
-A(T);
 
 
 document.addEventListener('keydown',function(e){if (e.code === 'Space'){e.preventDefault();PAUSED = !PAUSED;!PAUSED&&A(T)}});
