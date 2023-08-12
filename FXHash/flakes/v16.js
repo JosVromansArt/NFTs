@@ -1,5 +1,4 @@
 seed=Math.random()*99999999999|0;
-seed=1341511254;
 console.log(seed, 'seed');
 S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
