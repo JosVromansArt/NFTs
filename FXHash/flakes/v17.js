@@ -145,37 +145,22 @@ fill_polygon=(vertices, fill_color)=>{
 
 
 
-class Walk {
-    constructor(triBound, hue,s,l){
-        this.triBound = triBound;  // coordinates that define the triangle ax, ay, bx, by, cx, cy
-//        this.hue=hue;
-//        this.palette=palette;
+class Flake {
+    // A Flake is one 3th of a parent triangle. So it has 2 siblings with a similar hue but different lighting
+    constructor(a,b,c, hue,s,l){
+        this.a=a;
+        this.b=b;
+        this.c=c;
+        let triBound = [...a,...b,...c];
 
-
+        this.hue=hue;
+        this.s=s;
+        this.l=l;
         this.palette = [
             hslToStr(hue, 60, l),
             hslToStr(hue, 90, l),
             hslToStr(hue, 10, l),
         ]
-
-    //    fill_polygon([a,inside, b], hslToStr(hue,60,40), hue)
-    //    fill_polygon([a,inside,c], hslToStr(hue,60,60), hue)
-    //    fill_polygon([inside,b,c], hslToStr(hue,60,80), hue)
-
-
-//        let pal = [
-//            palette[R()*palette.length|0],
-//            palette[R()*palette.length|0],
-//        ];
-//        pal.push(pal[0])
-//        pal.push(pal[1])
-//        pal.push(pal[0])
-//        pal.push(pal[1])
-//        pal.push(pal[0])
-//        pal.push(pal[1])
-//
-//
-//        this.palette=pal;
 
         this.area = getTriangleArea(...triBound);
 //        this.color = this.palette[R()*this.palette.length|0];
@@ -258,7 +243,7 @@ class Walk {
     }
 
     pointInside(px, py) {
-        let [ax, ay, bx, by, cx, cy] = this.triBound;
+        let [ax, ay, bx, by, cx, cy] = [...this.a,...this.b,...this.c];
 
         let A1 = getTriangleArea(px,py,ax,ay,bx,by);
         let A2 = getTriangleArea(px,py,ax,ay,cx,cy);
@@ -344,11 +329,7 @@ class Walk {
             this.determineNext(0.07, 9);  // sets this.previous
 
             if (R()<.1){
-                this.center = [
-                    [this.triBound[0],this.triBound[1]],
-                    [this.triBound[2],this.triBound[3]],
-                    [this.triBound[4],this.triBound[5]],
-                ][R()*3|0]
+                this.center = [this.a,this.b,this.c][R()*3|0];
             }
 
             for (let pIndex=0; pIndex<this.previous.length; pIndex++){
@@ -366,13 +347,14 @@ class Walk {
         }
     }
 
-    draw(fill_color){
-        // Use the vertex indices, and get the according vertices from SCALED_VERTICES
-        X.fillStyle = fill_color;
+    draw(){  // fill the triangle
+        X.fillStyle = hslToStr(this.hue,this.s,this.l);
         X.beginPath();
-        X.moveTo(this.triBound[0], this.triBound[1]);
-        X.lineTo(this.triBound[2], this.triBound[3]);
-        X.lineTo(this.triBound[4], this.triBound[5]);
+        X.moveTo(...this.a);
+
+        X.lineTo(...this.b);
+        X.lineTo(...this.c);
+
         X.closePath();
         X.fill();
     }
@@ -393,15 +375,15 @@ MAX_FRAMES = 340;
 //WALKS = FINAL_TRIGS.map(trig=>new Walk([trig[0], trig[1], trig[2], trig[3], trig[4], trig[5]], PALETTE));
 
 // 3 walks per triangle, and later give them seperate colors
-WALKS = [];
+FLAKES = [];
 FINAL_TRIGS.forEach(trig=>{
     trig.color=PALETTE[R()*PALETTE.length|0];
     [
         [0,1,40],
         [2,1,60],
-        [0,2,90],
+        [0,2,80],
     ].map(v=>{
-        WALKS.push(new Walk([...trig[v[0]], ...trig[v[1]], ...trig[3]], trig.color[0],trig.color[1],v[2]));
+        FLAKES.push(new Flake(trig[v[0]],trig[v[1]],trig[3],trig.color[0],trig.color[1],v[2]));
     })
 })
 
@@ -411,7 +393,7 @@ if (TEXTURE){
     X.globalCompositeOperation='multiply';
 
     T=_=>{
-        WALKS.forEach(walk=>walk.fillFrame())
+        FLAKES.forEach(walk=>walk.fillFrame())
         FRAME_COUNTER ++;
         document.title = `${PAUSED?'[Paused]':'Flakes'} ${(FRAME_COUNTER/MAX_FRAMES*100|0)}%`
         if (!PAUSED&&FRAME_COUNTER<MAX_FRAMES){A(T)}
@@ -419,17 +401,7 @@ if (TEXTURE){
     A(T);
 } else {
     X.globalAlpha=1;
-
-    FINAL_TRIGS.forEach(t=>{
-        // one trig has 4 vertices,  a,b and c that make up the outer triangle, and one point inside the triangle
-        [
-            [0,1,40],
-            [2,1,60],
-            [0,2,80],
-        ].map(v=>{
-            fill_polygon([t[v[0]],t[v[1]], t[3]], hslToStr(t.color[0],60, v[2]), 0)
-        })
-    })
+    FLAKES.forEach(walk=>walk.draw())
 }
 
 
