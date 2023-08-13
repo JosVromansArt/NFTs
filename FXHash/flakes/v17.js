@@ -44,70 +44,6 @@ COMPOSITION_TYPE = determineCompositionType();
 console.log(COMPOSITION_TYPE, '   composition')
 
 
-
-
-class Triangle {
-    constructor(p1,p2,p3){
-        this.p1=p1;
-        this.p2=p2;
-        this.p3=p3;
-    }
-
-//    shrink(shrink_perc=.07){
-//        let m12 = getMidpoint(this.p1, this.p2);
-//        let m23 = getMidpoint(this.p2, this.p3);
-//        let m13 = getMidpoint(this.p1, this.p3);
-//
-//        let towards_m12 = getPointOnLine(this.p3, m12, shrink_perc);
-//        let towards_m23 = getPointOnLine(this.p1, m23, shrink_perc);
-//        let towards_m13 = getPointOnLine(this.p2, m13, shrink_perc);
-//
-//        this.p1 = towards_m23;
-//        this.p2 = towards_m13;
-//        this.p3 = towards_m12;
-//    }
-//
-//    draw(){
-//        X.fillStyle = hslToStr(...choice(PALETTE));
-//        X.beginPath();
-//        X.moveTo(...this.p1);
-//        X.lineTo(...this.p2);
-//        X.lineTo(...this.p3);
-//        X.closePath();
-//        X.fill();
-//    }
-
-    // one triangle A,B,C is converted into a list of one or more triangles
-//    subdivide(){
-//        SUBDIV_COUNTER += 1;
-//        let [a,b,c] = [this.p1, this.p2, this.p3];
-//        let random_value = R();
-//
-//        a = randomize(a, RANDOM_OFFSET);  // TODO: make this depend on the triangle size (roughly)
-//        b = randomize(b, RANDOM_OFFSET);
-//        c = randomize(c, RANDOM_OFFSET);
-//
-//        let ab = getMidpoint(a,b);
-//
-//        if (random_value < .4){
-//            let t1 = new Triangle(a, ab, c);
-//            let t2 = new Triangle(b, ab, c);
-//            return [t1,t2]
-//        }
-//        else if (random_value < .75){
-//            let cab = getMidpoint(ab,c);
-//
-//            let tr1 = new Triangle(a, ab, cab)
-//            let tr2 = new Triangle(b,  ab, cab)
-//            let tr3 = new Triangle(a, c, cab)
-//            let tr4 = new Triangle(b,  c, cab)
-//            return [tr1, tr2, tr3, tr4];
-//        }
-//
-//        return [this]; // return the original triangle
-//    }
-}
-
 getStartTriangles=_=>{
     let verts = [[0,0],[W,0],[W,H],[0,H]];
     [
@@ -128,9 +64,35 @@ getStartTriangles=_=>{
     } else if (COMPOSITION_TYPE==='B'){
         trigs = [[0, 1, 4],[4, 0, 5],[5, 4, 3],[4, 3,2]]
     }
-    return trigs.map(t=>new Triangle(verts[t[0]], verts[t[1]], verts[t[2]]))
+    return trigs.map(t=>[verts[t[0]], verts[t[1]], verts[t[2]]])
 }
 START_TRIANGLES = getStartTriangles();
+
+subdivide=(a,b,c,depth=0, previous_hue=180)=>{
+    let inside = random_in_triangle(a,b,c)
+
+    if (depth>DEPTH || (depth>1&&R()<.2)){
+        FINAL_TRIGS.push([...a,...b,...c,inside,previous_hue])
+        return
+    }
+
+    subdivide(inside, a,b, depth+1, PALETTE[R()*PALETTE.length|0][0])
+    subdivide(inside, b,c, depth+1, PALETTE[R()*PALETTE.length|0][0])
+    subdivide(inside, c,a, depth+1, PALETTE[R()*PALETTE.length|0][0])
+}
+
+
+//pA = [0,0];
+//pB = [0,H];
+//pC = [W,0];
+//TRIANGLE = [pA,pB,pC];
+START_HUE = R()*360|0;
+FINAL_TRIGS = [];
+START_TRIANGLES.forEach(t=>subdivide(t[0], t[1], t[2], 0, START_HUE+=4))
+
+
+
+
 
 
 function draw_line(a, b, color, width){
@@ -156,8 +118,8 @@ function random_in_triangle(a,b,c){
 //    console.log('total less than 1 :')
 //    console.log(perc1, perc2, perc1+perc2)
 
-    let P1 = getPointOnLine(a,b,perc1)
-    let P2 = getPointOnLine(a,c,perc2)
+    let P1 = getPointOnLine(a,b,perc1);
+    let P2 = getPointOnLine(a,c,perc2);
 
     return [
         a[0]+P1[0]+P2[0],
@@ -187,29 +149,10 @@ draw_y=(a,b,c, iter=0,color='#000')=>{
     }
 }
 
-START_HUE = R()*360|0;
-FINAL_TRIGS = [];
 
 
-function subdivide(a,b,c,depth=0, previous_hue=180){
-    let inside = random_in_triangle(a,b,c)
-
-    if (depth>DEPTH || (depth>1&&R()<.2)){
-        FINAL_TRIGS.push([...a,...b,...c,inside,previous_hue])
-        return
-    }
-
-    subdivide(inside, a,b, depth+1, PALETTE[R()*PALETTE.length|0][0] )
-    subdivide(inside, b,c, depth+1, PALETTE[R()*PALETTE.length|0][0] )
-    subdivide(inside, c,a, depth+1, PALETTE[R()*PALETTE.length|0][0] )
-}
 
 
-//pA = [0,0];
-//pB = [0,H];
-//pC = [W,0];
-//TRIANGLE = [pA,pB,pC];
-START_TRIANGLES.forEach(t=>subdivide(t.p1, t.p2, t.p3, 0, START_HUE+=64))
 
 
 
@@ -488,7 +431,7 @@ MAX_FRAMES = 340;
 //for (let i=0;i<WALK_COUNT;i++){startPoints2.push(getStartCo())}
 
 // Original 1 walk per triangle
-WALKS = FINAL_TRIGS.map(trig=>new Walk([trig[0], trig[1], trig[2], trig[3], trig[4], trig[5]], PALETTE));
+//WALKS = FINAL_TRIGS.map(trig=>new Walk([trig[0], trig[1], trig[2], trig[3], trig[4], trig[5]], PALETTE));
 
 // 3 walks per triangle, and later give them seperate colors
 WALKS = [];
@@ -515,8 +458,6 @@ if (TEXTURE){
         document.title = `${PAUSED?'[Paused]':'Flakes'} ${(FRAME_COUNTER/MAX_FRAMES*100|0)}%`
         if (!PAUSED&&FRAME_COUNTER<MAX_FRAMES){A(T)}
     }
-
-
     A(T);
 } else {
     X.globalAlpha=1;
