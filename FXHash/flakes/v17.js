@@ -108,55 +108,29 @@ class Triangle {
 //    }
 }
 
+getStartTriangles=_=>{
+    let verts = [[0,0],[W,0],[W,H],[0,H]];
+    [
+      [1,2],  // BC  index 4
+      [3,0],  // DA  index 5
+      [2,4],  // BBC  index 6
+      [5,3],  // BAD  index 7
+      [5,1],  // BAB  index 8
+   ].map(co=>{
+        verts.push(getMidpoint(verts[co[0]],verts[co[1]]))
+    })
 
-function get_start_triangles(){
-    let A = [0,0];
-    let B = [W,0];
-    let C = [W,H];
-    let D = [0,H];
-
-    let trigs = [];
-
+    let trigs = [[0, 1, 5],[1, 8, 2],[8, 2, 5],[5, 2, 3]];
     if (COMPOSITION_TYPE==='Z'){
-        let BC = getMidpoint(B,C);
-        let DA = getMidpoint(D,A);
-        let BBC = getMidpoint(B, BC);
-        let DAD = getMidpoint(DA, D);
-        trigs = [
-            [A, B, BBC],
-            [BBC, A, DAD],
-            [BBC, C, DAD],
-            [DAD,D,C],
-        ]
+        trigs=[[0, 1, 6],[6, 0, 7],[6, 2, 7],[7,3,2]]
     } else if (COMPOSITION_TYPE==='A'){
-        trigs = [
-            [A,B,C],
-            [C,A,D],
-        ]
+        trigs = [[0,1,2],[2,0,3]]
     } else if (COMPOSITION_TYPE==='B'){
-        let BC = getMidpoint(B,C);
-        let DA = getMidpoint(D,A);
-        trigs = [
-            [A, B, BC],
-            [BC, A, DA],
-            [DA, BC, D],
-            [BC, D,C],
-        ]
-    } else {
-        let DA = getMidpoint(D,A);
-        let DAB = getMidpoint(DA, B);
-        trigs = [
-            [A, B, DA],
-            [B, DAB, C],
-            [DAB, C, DA],
-            [DA, C, D],
-        ];
+        trigs = [[0, 1, 4],[4, 0, 5],[5, 4, 3],[4, 3,2]]
     }
-    return trigs.map(t=>new Triangle(...t))
+    return trigs.map(t=>new Triangle(verts[t[0]], verts[t[1]], verts[t[2]]))
 }
-
-
-START_TRIANGLES = get_start_triangles();
+START_TRIANGLES = getStartTriangles();
 
 
 function draw_line(a, b, color, width){
@@ -200,11 +174,9 @@ function random_in_triangle(a,b,c){
 draw_y=(a,b,c, iter=0,color='#000')=>{
     let inside = random_in_triangle(a,b,c);
 
-
     draw_line(a, inside, color, 1)
     draw_line(b, inside, color, 1)
     draw_line(c, inside, color, 1)
-
 
     X.lineWidth=.6;
 
@@ -233,9 +205,9 @@ function subdivide(a,b,c,depth=0, previous_hue=180){
 }
 
 
-pA = [0,0];
-pB = [0,H];
-pC = [W,0];
+//pA = [0,0];
+//pB = [0,H];
+//pC = [W,0];
 //TRIANGLE = [pA,pB,pC];
 START_TRIANGLES.forEach(t=>subdivide(t.p1, t.p2, t.p3, 0, START_HUE+=64))
 
