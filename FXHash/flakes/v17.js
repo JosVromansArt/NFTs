@@ -129,20 +129,6 @@ function draw_triangle(a,b,c,color='black'){
     draw_line(b,c,color,.2)
     draw_line(c,a,color,.2)
 }
-fill_polygon=(vertices, fill_color)=>{
-    // Use the vertex indices, and get the according vertices from SCALED_VERTICES
-    X.fillStyle = fill_color;
-    X.beginPath();
-    X.moveTo(...vertices[0]);
-
-    for (let k=1;k<vertices.length;k++){
-        X.lineTo(...vertices[k]);
-    }
-    X.closePath();
-    X.fill();
-}
-
-
 
 
 class Flake {
@@ -163,7 +149,6 @@ class Flake {
         ]
 
         this.area = getTriangleArea(...triBound);
-//        this.color = this.palette[R()*this.palette.length|0];
 
         this.minX = Math.min(triBound[0],triBound[2], triBound[4]);
         this.maxX = Math.max(triBound[0],triBound[2], triBound[4]);
@@ -178,55 +163,9 @@ class Flake {
         this.previous = []; // random point on triangle BBox to start? Will be updated as we walk
         for (let i=0; i<this.palette.length; i++){
             let sp = this.getPointOnBbox();
-//            X.globalAlpha=1;
-//            X.fillStyle='red';
-//            X.fillRect(sp[0]-10, sp[1]-10, 25,25)
-
             this.previous.push(sp)
         }
-//        X.fillRect(this.center[0]-10, this.center[1]-10, 25,25)
-//        console.log(this.center, ' is the center')
-//        X.globalAlpha=.1;
-
-//        this.iteration = 0;
     }
-
-//    drawBboxCenter(){
-//        X.globalAlpha=.6;
-//        X.fillStyle='red';
-//
-//        X.fillRect(this.minX, this.minY, this.maxX- this.minX, this.maxY - this.minY);
-//        X.globalAlpha=1;
-//
-//
-//        for (let i=0; i<50; i++){
-//            X.fillRect(...this.getPointOnBbox(), 5, 5);
-//        }
-//
-//
-//        this.draw('white')
-//        X.globalAlpha=1;
-//        X.globalCompositeOperation='source-over';
-//        X.fillStyle='yellow';
-//        X.fillRect(this.center[0]-6, this.center[1]-6, 12, 12);
-//
-//        let width = this.maxX - this.minX;
-//        let height = this.maxY - this.minY;
-//
-//        let rX = R() * width + this.minX;
-//        let rY = R() * height + this.minY;
-//        X.fillStyle='red';
-//
-//        alert(this.pointInside(rX,rY))
-//
-//        X.fillRect(rX, rY, 10, 10);
-//
-//
-//
-////        X.globalAlpha=.1;
-////        this.fill();
-//
-//    }
 
     getPointOnBbox(){
             // the start point of the random walk lies on the bbox around the triangle, so it will actually start outside the triangle
@@ -249,13 +188,7 @@ class Flake {
         let A2 = getTriangleArea(px,py,ax,ay,cx,cy);
         let A3 = getTriangleArea(px,py,bx,by,cx,cy);
 
-//        console.log(this.area, ' triangle area')
-//        console.log(A1, ' A1 area')
-//        console.log(A2, ' A2 area')
-//        console.log(A3, ' A3 area')
-
         return Math.abs(this.area-(A1+A2+A3)) < 3;
-
 //        return (cx - px) * (ay - py) - (ax - px) * (cy - py) >= 0 && (ax - px) * (by - py) - (bx - px) * (ay - py) >= 0 && (bx - px) * (cy - py) - (cx - px) * (by - py) >= 0;
     }
 
@@ -292,35 +225,10 @@ class Flake {
         this.previous = newPrevious
     }
 
-
-
-
-//    fill(){
-//        // start a random walk to fill the triangle
-//
-//        X.globalAlpha=0.02;
-//        for (let i=0; i<149999; i++){
-////            this.determineNext(0.002, 6);  // sets this.previous
-//            this.determineNext(0.0006, 4);  // sets this.previous
-//
-//            for (let pIndex=0; pIndex<this.previous.length; pIndex++){
-//
-//
-//                if (this.pointInside(...this.previous[pIndex])){
-//
-//                    X.fillStyle = this.palette[3];  //PALETTE[j%PALETTE.length];
-//                    X.fillRect(...this.previous[pIndex],3,3);
-//
-//                }
-//
-//
-//            }
-//        }
-//    }
     fillFrame(){
-        // start a random walk to fill the triangle
+        if (this.area<9999){return}  // don't fill small triangles for now
 
-//        console.log(this.previous.length)
+        // start a random walk to fill the triangle
 
         X.globalAlpha=0.04;
         for (let i=0; i<999; i++){
@@ -365,12 +273,6 @@ class Flake {
 FRAME_COUNTER = 0;
 MAX_FRAMES = 340;
 
-//WALK_COUNT = 20;
-//let startPoints = [];
-//let startPoints2 = [];
-//for (let i=0;i<WALK_COUNT;i++){startPoints.push(getStartCo())}
-//for (let i=0;i<WALK_COUNT;i++){startPoints2.push(getStartCo())}
-
 // Original 1 walk per triangle
 //WALKS = FINAL_TRIGS.map(trig=>new Walk([trig[0], trig[1], trig[2], trig[3], trig[4], trig[5]], PALETTE));
 
@@ -406,69 +308,6 @@ if (TEXTURE){
 
 
 document.addEventListener('keydown',function(e){if (e.code === 'Space'){e.preventDefault();PAUSED = !PAUSED;!PAUSED&&A(T)}});
-
-
-
-//let randomIndex = R() * FINAL_TRIGS.length|0;
-//console.log('RAndom triangle ', randomIndex);
-//let randomTrig = FINAL_TRIGS[randomIndex];
-//
-//let walk = new Walk([randomTrig[0], randomTrig[1], randomTrig[2], randomTrig[3], randomTrig[4], randomTrig[5]], PALETTES[R()*PALETTES.length|0])
-//walk.fill();
-//walk.drawBboxCenter();
-
-
-
-//
-//FINAL_TRIGS.forEach(trig=>{
-////    let trig = FINAL_TRIGS[nr];
-//
-//
-//
-//    let walk = new Walk([trig[0], trig[1], trig[2], trig[3], trig[4], trig[5]], PALETTES[R()*PALETTES.length|0])
-//    walk.fill();
-//})
-//
-//
-//drawAll=_=>{
-//    X.globalAlpha=1;
-//    X.globalCompositeOperation='source-over'
-//    FINAL_TRIGS.forEach(trig=>{
-//    //    let trig = FINAL_TRIGS[nr];
-//
-//        let walk = new Walk([trig[0], trig[1], trig[2], trig[3], trig[4], trig[5]], PALETTES[R()*PALETTES.length|0])
-//        walk.draw();
-//    })
-//}
-
-
-
-
-//function checkT(){
-//    FINAL_TRIGS.forEach(t=>{
-//        console.log(t);
-//        let ax=t[0];
-//        let ay=t[1];
-//        let bx=t[2];
-//        let by=t[3];
-//        let cx=t[4];
-//        let cy=t[5];
-//        let hue = t[8];
-//        console.log(hue)
-//        fill_polygon([[ax,ay],[bx,by],[cx,cy]], hslToStr(hue,60,40))
-//    //    fill_polygon([a,inside, b], hslToStr(hue,60,40), hue)
-//    //    fill_polygon([a,inside,c], hslToStr(hue,60,60), hue)
-//    //    fill_polygon([inside,b,c], hslToStr(hue,60,80), hue)
-//
-//    })
-//
-//}
-
-
-
-
-
-
 
 
 //
