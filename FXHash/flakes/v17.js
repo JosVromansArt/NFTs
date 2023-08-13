@@ -4,10 +4,11 @@ console.log(SEED, 'seed');
 S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
 [...SEED+'ThxPiter'].map(c=>R(S[0]^=c.charCodeAt()*S[3]));
+A=window.requestAnimationFrame;
+FILE_NAME = `FLAKES_`;
 
 C.width=W=1200;
 C.height=H=1800;
-//RATIO = 2/3;  // 1200x1800
 WW=window.innerWidth;
 WH=window.innerHeight;
 SCALE = (WW/WH>2/3)?WH/H:WW/W;  // the scale will depend on the longest or shortest side, depending how it fits the current window
@@ -22,18 +23,21 @@ X.globalAlpha=.02;
 X.globalCompositeOperation='multiply';
 
 
-A=window.requestAnimationFrame;
+hslToStr=(h,s,l,a=1)=>'hsl(' + h + ',' + s + '%,' + l + '%,' + a + ')';
+getMidpoint=(a,b)=>[(a[0] + b[0])/2,(a[1] + b[1])/2];
+getTriangleArea=(x1,y1,x2,y2,x3,y3)=>Math.abs((x1*(y2-y3)+x2*(y3-y1)+x3*(y1-y2))/2);
+getPointOnLine=(a,b,perc)=>{  // relative to a !!
+    let diffX = perc * (b[0] - a[0]);
+    let diffY = perc * (b[1] - a[1]);
+    return [diffX,diffY];
+}
+
+
 PAUSED=false;
 DEPTH=1;
 TEXTURE = true;  // if false, fill a rectangle with the single color, for faster test rendering
-
-
 PALETTE = [[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]]
-function hsl_to_str(h,s,l,a=1){return 'hsl(' + h + ',' + s + '%,' + l + '%,' + a + ')';}
-//PALETTE = PALETTE.map(c=>hsl_to_str(...c))
-get_midpoint=(a,b)=>[(a[0] + b[0])/2,(a[1] + b[1])/2];
-
-
+//PALETTE = PALETTE.map(c=>hslToStr(...c))
 COMPOSITION_TYPE = 'unknown';
 
 
@@ -45,13 +49,13 @@ class Triangle {
     }
 
 //    shrink(shrink_perc=.07){
-//        let m12 = get_midpoint(this.p1, this.p2);
-//        let m23 = get_midpoint(this.p2, this.p3);
-//        let m13 = get_midpoint(this.p1, this.p3);
+//        let m12 = getMidpoint(this.p1, this.p2);
+//        let m23 = getMidpoint(this.p2, this.p3);
+//        let m13 = getMidpoint(this.p1, this.p3);
 //
-//        let towards_m12 = get_point_on_line(this.p3, m12, shrink_perc);
-//        let towards_m23 = get_point_on_line(this.p1, m23, shrink_perc);
-//        let towards_m13 = get_point_on_line(this.p2, m13, shrink_perc);
+//        let towards_m12 = getPointOnLine(this.p3, m12, shrink_perc);
+//        let towards_m23 = getPointOnLine(this.p1, m23, shrink_perc);
+//        let towards_m13 = getPointOnLine(this.p2, m13, shrink_perc);
 //
 //        this.p1 = towards_m23;
 //        this.p2 = towards_m13;
@@ -59,7 +63,7 @@ class Triangle {
 //    }
 //
 //    draw(){
-//        X.fillStyle = hsl_to_str(...choice(PALETTE));
+//        X.fillStyle = hslToStr(...choice(PALETTE));
 //        X.beginPath();
 //        X.moveTo(...this.p1);
 //        X.lineTo(...this.p2);
@@ -78,7 +82,7 @@ class Triangle {
 //        b = randomize(b, RANDOM_OFFSET);
 //        c = randomize(c, RANDOM_OFFSET);
 //
-//        let ab = get_midpoint(a,b);
+//        let ab = getMidpoint(a,b);
 //
 //        if (random_value < .4){
 //            let t1 = new Triangle(a, ab, c);
@@ -86,7 +90,7 @@ class Triangle {
 //            return [t1,t2]
 //        }
 //        else if (random_value < .75){
-//            let cab = get_midpoint(ab,c);
+//            let cab = getMidpoint(ab,c);
 //
 //            let tr1 = new Triangle(a, ab, cab)
 //            let tr2 = new Triangle(b,  ab, cab)
@@ -109,10 +113,10 @@ function get_start_triangles(){
     let D = [0,H];
 
     if (random_value < .1){
-        let BC = get_midpoint(B,C);
-        let DA = get_midpoint(D,A);
-        let BBC = get_midpoint(B, BC);
-        let DAD = get_midpoint(DA, D);
+        let BC = getMidpoint(B,C);
+        let DA = getMidpoint(D,A);
+        let BBC = getMidpoint(B, BC);
+        let DAD = getMidpoint(DA, D);
 
         COMPOSITION_TYPE = 'Z'
         return [
@@ -129,8 +133,8 @@ function get_start_triangles(){
         ]
     } else if (random_value < .66){
         COMPOSITION_TYPE = 'B'
-        let BC = get_midpoint(B,C);
-        let DA = get_midpoint(D,A);
+        let BC = getMidpoint(B,C);
+        let DA = getMidpoint(D,A);
 
         return [
             new Triangle(A, B, BC),
@@ -139,8 +143,8 @@ function get_start_triangles(){
             new Triangle(BC, D,C),
         ]
     }
-    let DA = get_midpoint(D,A);
-    let DAB = get_midpoint(DA, B);
+    let DA = getMidpoint(D,A);
+    let DAB = getMidpoint(DA, B);
     COMPOSITION_TYPE = 'C'
     return [
         new Triangle(A, B, DA),
@@ -154,10 +158,6 @@ function get_start_triangles(){
 START_TRIANGLES = get_start_triangles();
 
 
-
-randomInt=(a, b)=>Math.floor(a + (b - a) * R());
-FILE_NAME = `SUBDIVIDED_FLAKES_`;
-
 function draw_line(a, b, color, width){
     X.lineWidth = width;
     X.strokeStyle = color;
@@ -165,24 +165,6 @@ function draw_line(a, b, color, width){
     X.moveTo(...a);
     X.lineTo(...b);
     X.stroke();
-}
-
-function get_distance(pointA, pointB){
-    diffX = pointA[0] - pointB[0];
-    diffY = pointA[1] - pointB[1];
-
-    // dont take the square root, because we only compare distance, so rooting is not necessary, the order stays the same
-    return diffX ** 2 + diffY ** 2
-}
-
-
-
-//
-//
-function get_point_on_line(a,b,perc){  // relative to a !!
-    let diffX = perc * (b[0] - a[0]);
-    let diffY = perc * (b[1] - a[1]);
-    return [diffX,diffY]
 }
 function draw_triangle(a,b,c,color='black'){
     draw_line(a,b,color,.2)
@@ -199,8 +181,8 @@ function random_in_triangle(a,b,c){
 //    console.log('total less than 1 :')
 //    console.log(perc1, perc2, perc1+perc2)
 
-    let P1 = get_point_on_line(a,b,perc1)
-    let P2 = get_point_on_line(a,c,perc2)
+    let P1 = getPointOnLine(a,b,perc1)
+    let P2 = getPointOnLine(a,c,perc2)
 
     return [
         a[0]+P1[0]+P2[0],
@@ -257,9 +239,6 @@ pC = [W,0];
 START_TRIANGLES.forEach(t=>subdivide(t.p1, t.p2, t.p3, 0, START_HUE+=64))
 
 
-WALK_COUNT = 20;
-
-
 
 fill_polygon=(vertices, fill_color)=>{
     // Use the vertex indices, and get the according vertices from SCALED_VERTICES
@@ -289,7 +268,7 @@ fill_polygon=(vertices, fill_color)=>{
 //PALETTE = PALETTES[PALETTE_INDEX];
 
 
-triangleArea=(x1,y1,x2,y2,x3,y3)=>Math.abs((x1*(y2-y3)+x2*(y3-y1)+x3*(y1-y2))/2);
+
 
 class Walk {
     constructor(triBound, hue,s,l){
@@ -299,14 +278,14 @@ class Walk {
 
 
         this.palette = [
-            hsl_to_str(hue, 60, l),
-            hsl_to_str(hue, 90, l),
-            hsl_to_str(hue, 10, l),
+            hslToStr(hue, 60, l),
+            hslToStr(hue, 90, l),
+            hslToStr(hue, 10, l),
         ]
 
-    //    fill_polygon([a,inside, b], hsl_to_str(hue,60,40), hue)
-    //    fill_polygon([a,inside,c], hsl_to_str(hue,60,60), hue)
-    //    fill_polygon([inside,b,c], hsl_to_str(hue,60,80), hue)
+    //    fill_polygon([a,inside, b], hslToStr(hue,60,40), hue)
+    //    fill_polygon([a,inside,c], hslToStr(hue,60,60), hue)
+    //    fill_polygon([inside,b,c], hslToStr(hue,60,80), hue)
 
 
 //        let pal = [
@@ -323,7 +302,7 @@ class Walk {
 //
 //        this.palette=pal;
 
-        this.area = triangleArea(...triBound);
+        this.area = getTriangleArea(...triBound);
 //        this.color = this.palette[R()*this.palette.length|0];
 
         this.minX = Math.min(triBound[0],triBound[2], triBound[4]);
@@ -406,9 +385,9 @@ class Walk {
     pointInside(px, py) {
         let [ax, ay, bx, by, cx, cy] = this.triBound;
 
-        let A1 = triangleArea(px,py,ax,ay,bx,by);
-        let A2 = triangleArea(px,py,ax,ay,cx,cy);
-        let A3 = triangleArea(px,py,bx,by,cx,cy);
+        let A1 = getTriangleArea(px,py,ax,ay,bx,by);
+        let A2 = getTriangleArea(px,py,ax,ay,cx,cy);
+        let A3 = getTriangleArea(px,py,bx,by,cx,cy);
 
 //        console.log(this.area, ' triangle area')
 //        console.log(A1, ' A1 area')
@@ -529,6 +508,7 @@ class Walk {
 FRAME_COUNTER = 0;
 MAX_FRAMES = 340;
 
+//WALK_COUNT = 20;
 //let startPoints = [];
 //let startPoints2 = [];
 //for (let i=0;i<WALK_COUNT;i++){startPoints.push(getStartCo())}
@@ -541,9 +521,9 @@ WALKS = FINAL_TRIGS.map(trig=>new Walk([trig[0], trig[1], trig[2], trig[3], trig
 WALKS = [];
 FINAL_TRIGS.forEach(trig=>{
 
-//    fill_polygon([a,inside, b], hsl_to_str(hue,60,40), hue)
-    //    fill_polygon([a,inside,c], hsl_to_str(hue,60,60), hue)
-    //    fill_polygon([inside,b,c], hsl_to_str(hue,60,80), hue)
+//    fill_polygon([a,inside, b], hslToStr(hue,60,40), hue)
+    //    fill_polygon([a,inside,c], hslToStr(hue,60,60), hue)
+    //    fill_polygon([inside,b,c], hslToStr(hue,60,80), hue)
 
     let randomColor = PALETTE[R()*PALETTE.length|0];
     let hue = randomColor[0];
@@ -575,9 +555,9 @@ if (TEXTURE){
         let inside = trig[6];
         let hue = trig[7]
 
-        fill_polygon([a,inside, b], hsl_to_str(hue,60,40), hue)
-        fill_polygon([a,inside,c], hsl_to_str(hue,60,60), hue)
-        fill_polygon([inside,b,c], hsl_to_str(hue,60,80), hue)
+        fill_polygon([a,inside, b], hslToStr(hue,60,40), hue)
+        fill_polygon([a,inside,c], hslToStr(hue,60,60), hue)
+        fill_polygon([inside,b,c], hslToStr(hue,60,80), hue)
     })
 }
 
@@ -632,10 +612,10 @@ document.addEventListener('keydown',function(e){if (e.code === 'Space'){e.preven
 //        let cy=t[5];
 //        let hue = t[8];
 //        console.log(hue)
-//        fill_polygon([[ax,ay],[bx,by],[cx,cy]], hsl_to_str(hue,60,40))
-//    //    fill_polygon([a,inside, b], hsl_to_str(hue,60,40), hue)
-//    //    fill_polygon([a,inside,c], hsl_to_str(hue,60,60), hue)
-//    //    fill_polygon([inside,b,c], hsl_to_str(hue,60,80), hue)
+//        fill_polygon([[ax,ay],[bx,by],[cx,cy]], hslToStr(hue,60,40))
+//    //    fill_polygon([a,inside, b], hslToStr(hue,60,40), hue)
+//    //    fill_polygon([a,inside,c], hslToStr(hue,60,60), hue)
+//    //    fill_polygon([inside,b,c], hslToStr(hue,60,80), hue)
 //
 //    })
 //
