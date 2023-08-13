@@ -1,6 +1,6 @@
 SEED=Math.random()*99999999999|0;
-//SEED = -1338485593;
-SEED = 1327686124;
+SEED = -1338485593;
+//SEED = 1327686124;
 console.log(SEED, 'seed');
 S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
@@ -32,7 +32,7 @@ getPointOnLine=(a,b,perc)=>{  // relative to a !!
 
 
 PAUSED=false;
-DEPTH=1;
+DEPTH=7;
 TEXTURE = true;  // if false, fill a rectangle with the single color, for faster test rendering
 PALETTE = [[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]]
 //PALETTE = PALETTE.map(c=>hslToStr(...c))
@@ -45,43 +45,21 @@ console.log(COMPOSITION_TYPE, '   composition')
 getStartTriangles=_=>{
     let verts = [[0,0],[W,0],[W,H],[0,H]];
     [
-      [1,2],  // BC  index 4
-      [3,0],  // DA  index 5
-      [2,4],  // BBC  index 6
-      [5,3],  // BAD  index 7
-      [5,1],  // BAB  index 8
-   ].map(co=>{
+        [1,2],  // BC  index 4
+        [3,0],  // DA  index 5
+        [2,4],  // BBC  index 6
+        [5,3],  // BAD  index 7
+        [5,1],  // BAB  index 8
+    ].map(co=>{
         verts.push(getMidpoint(verts[co[0]],verts[co[1]]))
     })
-
-    let trigs = [[0, 1, 5],[1, 8, 2],[8, 2, 5],[5, 2, 3]];
-    if (COMPOSITION_TYPE==='Z'){
-        trigs=[[0, 1, 6],[6, 0, 7],[6, 2, 7],[7,3,2]]
-    } else if (COMPOSITION_TYPE==='A'){
-        trigs = [[0,1,2],[2,0,3]]
-    } else if (COMPOSITION_TYPE==='B'){
-        trigs = [[0, 1, 4],[4, 0, 5],[5, 4, 3],[4, 3,2]]
-    }
-    return trigs.map(t=>[verts[t[0]], verts[t[1]], verts[t[2]]])
+    return {
+        'Z':[[0, 1, 6],[6, 0, 7],[6, 2, 7],[7,3,2]],
+        'A':[[0,1,2],[2,0,3]],
+        'B':[[0, 1, 4],[4, 0, 5],[5, 4, 3],[4, 3,2]],
+        'C':[[0, 1, 5],[1, 8, 2],[8, 2, 5],[5, 2, 3]],
+    }[COMPOSITION_TYPE].map(t=>[verts[t[0]], verts[t[1]], verts[t[2]]])
 }
-START_TRIANGLES = getStartTriangles();
-
-subdivide=(a,b,c,depth=0)=>{
-    let inside = random_in_triangle(a,b,c)
-
-    if (depth>DEPTH || (depth>1&&R()<.2)){
-        FINAL_TRIGS.push([a,b,c,inside])
-        return
-    }
-
-    subdivide(inside, a,b, depth+1)
-    subdivide(inside, b,c, depth+1)
-    subdivide(inside, c,a, depth+1)
-}
-FINAL_TRIGS = [];
-START_TRIANGLES.forEach(t=>subdivide(t[0], t[1], t[2]))
-
-
 
 
 function random_in_triangle(a,b,c){
@@ -165,6 +143,7 @@ class Flake {
             let sp = this.getPointOnBbox();
             this.previous.push(sp)
         }
+        this.counter=0;  // keep track of frame in the case of texturing
     }
 
     getPointOnBbox(){
@@ -226,7 +205,12 @@ class Flake {
     }
 
     fillFrame(){
-        if (this.area<9999){return}  // don't fill small triangles for now
+        if (this.area<999){  //} && this.counter>60){
+            return
+        }  // don't fill small triangles for now
+//        this.counter++;
+//        console.log(this.counter);
+
 
         // start a random walk to fill the triangle
 
@@ -270,24 +254,27 @@ class Flake {
 
 
 
+START_TRIANGLES = getStartTriangles();
+
+FLAKES = [];
+subdivide=(a,b,c,depth=0)=>{
+    let inside = random_in_triangle(a,b,c)
+
+    if (depth>DEPTH || (depth>1&&R()<.2)){
+        let trig = [a,b,c,inside];
+        trig.color=PALETTE[R()*PALETTE.length|0];
+        [[0,1,45],[2,1,60],[0,2,75]].map(v=>{FLAKES.push(new Flake(trig[v[0]],trig[v[1]],trig[3],trig.color[0],trig.color[1],v[2]))})
+        return
+    }
+    subdivide(inside, a,b, depth+1)
+    subdivide(inside, b,c, depth+1)
+    subdivide(inside, c,a, depth+1)
+}
+START_TRIANGLES.forEach(t=>subdivide(t[0], t[1], t[2]))
+
+
 FRAME_COUNTER = 0;
 MAX_FRAMES = 340;
-
-// Original 1 walk per triangle
-//WALKS = FINAL_TRIGS.map(trig=>new Walk([trig[0], trig[1], trig[2], trig[3], trig[4], trig[5]], PALETTE));
-
-// 3 walks per triangle, and later give them seperate colors
-FLAKES = [];
-FINAL_TRIGS.forEach(trig=>{
-    trig.color=PALETTE[R()*PALETTE.length|0];
-    [
-        [0,1,40],
-        [2,1,60],
-        [0,2,80],
-    ].map(v=>{
-        FLAKES.push(new Flake(trig[v[0]],trig[v[1]],trig[3],trig.color[0],trig.color[1],v[2]));
-    })
-})
 
 
 if (TEXTURE){
