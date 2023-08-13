@@ -1,5 +1,6 @@
 SEED=Math.random()*99999999999|0;
 //SEED = -1338485593;
+SEED = 1327686124;
 console.log(SEED, 'seed');
 S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
@@ -19,9 +20,6 @@ X=C.getContext('2d');
 X.fillStyle='#fff';
 X.fillRect(0,0,W,H);
 
-X.globalAlpha=.02;
-X.globalCompositeOperation='multiply';
-
 
 hslToStr=(h,s,l,a=1)=>'hsl(' + h + ',' + s + '%,' + l + '%,' + a + ')';
 getMidpoint=(a,b)=>[(a[0] + b[0])/2,(a[1] + b[1])/2];
@@ -35,7 +33,7 @@ getPointOnLine=(a,b,perc)=>{  // relative to a !!
 
 PAUSED=false;
 DEPTH=1;
-TEXTURE = false;  // if false, fill a rectangle with the single color, for faster test rendering
+TEXTURE = true;  // if false, fill a rectangle with the single color, for faster test rendering
 PALETTE = [[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]]
 //PALETTE = PALETTE.map(c=>hslToStr(...c))
 
@@ -68,56 +66,29 @@ getStartTriangles=_=>{
 }
 START_TRIANGLES = getStartTriangles();
 
-subdivide=(a,b,c,depth=0, previous_hue=180)=>{
+subdivide=(a,b,c,depth=0)=>{
     let inside = random_in_triangle(a,b,c)
 
     if (depth>DEPTH || (depth>1&&R()<.2)){
-        FINAL_TRIGS.push([...a,...b,...c,inside,previous_hue])
+        FINAL_TRIGS.push([a,b,c,inside])
         return
     }
 
-    subdivide(inside, a,b, depth+1, PALETTE[R()*PALETTE.length|0][0])
-    subdivide(inside, b,c, depth+1, PALETTE[R()*PALETTE.length|0][0])
-    subdivide(inside, c,a, depth+1, PALETTE[R()*PALETTE.length|0][0])
+    subdivide(inside, a,b, depth+1)
+    subdivide(inside, b,c, depth+1)
+    subdivide(inside, c,a, depth+1)
 }
-
-
-//pA = [0,0];
-//pB = [0,H];
-//pC = [W,0];
-//TRIANGLE = [pA,pB,pC];
-START_HUE = R()*360|0;
 FINAL_TRIGS = [];
-START_TRIANGLES.forEach(t=>subdivide(t[0], t[1], t[2], 0, START_HUE+=4))
+START_TRIANGLES.forEach(t=>subdivide(t[0], t[1], t[2]))
 
 
 
-
-
-
-function draw_line(a, b, color, width){
-    X.lineWidth = width;
-    X.strokeStyle = color;
-    X.beginPath();
-    X.moveTo(...a);
-    X.lineTo(...b);
-    X.stroke();
-}
-function draw_triangle(a,b,c,color='black'){
-    draw_line(a,b,color,.2)
-    draw_line(b,c,color,.2)
-    draw_line(c,a,color,.2)
-}
 
 function random_in_triangle(a,b,c){
     let perc1 = 0.2+R()*.6;
 
     let maxrange = 1-perc1;
     let perc2 = R() * maxrange * .8 + maxrange*.1;
-
-//    console.log('total less than 1 :')
-//    console.log(perc1, perc2, perc1+perc2)
-
     let P1 = getPointOnLine(a,b,perc1);
     let P2 = getPointOnLine(a,c,perc2);
 
@@ -126,10 +97,6 @@ function random_in_triangle(a,b,c){
         a[1]+P1[1]+P2[1]
     ]
 }
-
-
-//draw_triangle(pA,pB,pC)
-//inside = random_in_triangle(pA,pB,pC)
 
 
 // recursively draw division lines
@@ -149,13 +116,19 @@ draw_y=(a,b,c, iter=0,color='#000')=>{
     }
 }
 
-
-
-
-
-
-
-
+function draw_line(a, b, color, width){
+    X.lineWidth = width;
+    X.strokeStyle = color;
+    X.beginPath();
+    X.moveTo(...a);
+    X.lineTo(...b);
+    X.stroke();
+}
+function draw_triangle(a,b,c,color='black'){
+    draw_line(a,b,color,.2)
+    draw_line(b,c,color,.2)
+    draw_line(c,a,color,.2)
+}
 fill_polygon=(vertices, fill_color)=>{
     // Use the vertex indices, and get the according vertices from SCALED_VERTICES
     X.fillStyle = fill_color;
@@ -168,20 +141,6 @@ fill_polygon=(vertices, fill_color)=>{
     X.closePath();
     X.fill();
 }
-
-//
-//getTriangle=(p)=>{
-//    for (let i=0; i<FINAL_TRIGS.length;i++){
-//        let [ax,ay,bx,by,cx,cy,hueValue] = FINAL_TRIGS[i];
-//        if (pointInTriangle(ax,ay,bx,by,cx,cy,p[0],p[1])){
-//            return i;
-//        }
-//    }
-//    return -1;
-//}
-
-//PALETTE_INDEX = R()*PALETTES.length|0;
-//PALETTE = PALETTES[PALETTE_INDEX];
 
 
 
@@ -436,22 +395,21 @@ MAX_FRAMES = 340;
 // 3 walks per triangle, and later give them seperate colors
 WALKS = [];
 FINAL_TRIGS.forEach(trig=>{
-
-//    fill_polygon([a,inside, b], hslToStr(hue,60,40), hue)
-    //    fill_polygon([a,inside,c], hslToStr(hue,60,60), hue)
-    //    fill_polygon([inside,b,c], hslToStr(hue,60,80), hue)
-
-    let randomColor = PALETTE[R()*PALETTE.length|0];
-    let hue = randomColor[0];
-    let s = randomColor[1];
-
-    WALKS.push(new Walk([trig[0], trig[1], trig[2], trig[3], ...trig[6]], hue,s,40));
-    WALKS.push(new Walk([trig[4], trig[5], trig[2], trig[3], ...trig[6]], hue,s,60));
-    WALKS.push(new Walk([trig[0], trig[1], trig[4], trig[5], ...trig[6]], hue,s,80));
+    trig.color=PALETTE[R()*PALETTE.length|0];
+    [
+        [0,1,40],
+        [2,1,60],
+        [0,2,90],
+    ].map(v=>{
+        WALKS.push(new Walk([...trig[v[0]], ...trig[v[1]], ...trig[3]], trig.color[0],trig.color[1],v[2]));
+    })
 })
 
 
 if (TEXTURE){
+    X.globalAlpha=.02;
+    X.globalCompositeOperation='multiply';
+
     T=_=>{
         WALKS.forEach(walk=>walk.fillFrame())
         FRAME_COUNTER ++;
@@ -462,16 +420,15 @@ if (TEXTURE){
 } else {
     X.globalAlpha=1;
 
-    FINAL_TRIGS.forEach(trig=>{
-        let a = [trig[0], trig[1]];
-        let b = [trig[2], trig[3]];
-        let c = [trig[4], trig[5]];
-        let inside = trig[6];
-        let hue = trig[7]
-
-        fill_polygon([a,inside, b], hslToStr(hue,60,40), hue)
-        fill_polygon([a,inside,c], hslToStr(hue,60,60), hue)
-        fill_polygon([inside,b,c], hslToStr(hue,60,80), hue)
+    FINAL_TRIGS.forEach(t=>{
+        // one trig has 4 vertices,  a,b and c that make up the outer triangle, and one point inside the triangle
+        [
+            [0,1,40],
+            [2,1,60],
+            [0,2,80],
+        ].map(v=>{
+            fill_polygon([t[v[0]],t[v[1]], t[3]], hslToStr(t.color[0],60, v[2]), 0)
+        })
     })
 }
 
