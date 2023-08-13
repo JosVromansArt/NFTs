@@ -1,5 +1,5 @@
 SEED=Math.random()*99999999999|0;
-SEED = -1338485593;
+//SEED = -1338485593;
 console.log(SEED, 'seed');
 S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
@@ -35,10 +35,15 @@ getPointOnLine=(a,b,perc)=>{  // relative to a !!
 
 PAUSED=false;
 DEPTH=1;
-TEXTURE = true;  // if false, fill a rectangle with the single color, for faster test rendering
+TEXTURE = false;  // if false, fill a rectangle with the single color, for faster test rendering
 PALETTE = [[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]]
 //PALETTE = PALETTE.map(c=>hslToStr(...c))
-COMPOSITION_TYPE = 'unknown';
+
+determineCompositionType=(rv=R())=>rv<.1?'Z':(rv<.3?'A':(rv<.66?'B':'C'));
+COMPOSITION_TYPE = determineCompositionType();
+console.log(COMPOSITION_TYPE, '   composition')
+
+
 
 
 class Triangle {
@@ -105,53 +110,49 @@ class Triangle {
 
 
 function get_start_triangles(){
-    let random_value = R();
-
     let A = [0,0];
     let B = [W,0];
     let C = [W,H];
     let D = [0,H];
 
-    if (random_value < .1){
+    let trigs = [];
+
+    if (COMPOSITION_TYPE==='Z'){
         let BC = getMidpoint(B,C);
         let DA = getMidpoint(D,A);
         let BBC = getMidpoint(B, BC);
         let DAD = getMidpoint(DA, D);
-
-        COMPOSITION_TYPE = 'Z'
-        return [
-            new Triangle(A, B, BBC),
-            new Triangle(BBC, A, DAD),
-            new Triangle(BBC, C, DAD),
-            new Triangle(DAD,D,C),
+        trigs = [
+            [A, B, BBC],
+            [BBC, A, DAD],
+            [BBC, C, DAD],
+            [DAD,D,C],
         ]
-    } else if (random_value < .3){
-        COMPOSITION_TYPE = 'A'
-        return [
-            new Triangle(A, B, C),
-            new Triangle(C, A, D),
+    } else if (COMPOSITION_TYPE==='A'){
+        trigs = [
+            [A,B,C],
+            [C,A,D],
         ]
-    } else if (random_value < .66){
-        COMPOSITION_TYPE = 'B'
+    } else if (COMPOSITION_TYPE==='B'){
         let BC = getMidpoint(B,C);
         let DA = getMidpoint(D,A);
-
-        return [
-            new Triangle(A, B, BC),
-            new Triangle(BC, A, DA),
-            new Triangle(DA, BC, D),
-            new Triangle(BC, D,C),
+        trigs = [
+            [A, B, BC],
+            [BC, A, DA],
+            [DA, BC, D],
+            [BC, D,C],
         ]
+    } else {
+        let DA = getMidpoint(D,A);
+        let DAB = getMidpoint(DA, B);
+        trigs = [
+            [A, B, DA],
+            [B, DAB, C],
+            [DAB, C, DA],
+            [DA, C, D],
+        ];
     }
-    let DA = getMidpoint(D,A);
-    let DAB = getMidpoint(DA, B);
-    COMPOSITION_TYPE = 'C'
-    return [
-        new Triangle(A, B, DA),
-        new Triangle(B, DAB, C),
-        new Triangle(DAB, C, DA),
-        new Triangle(DA, C, D),
-    ];
+    return trigs.map(t=>new Triangle(...t))
 }
 
 
