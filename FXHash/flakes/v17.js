@@ -1,5 +1,5 @@
 SEED=Math.random()*99999999999|0;
-SEED = -1338485593;
+//SEED = -1338485593;
 //SEED = 1327686124;
 console.log(SEED, 'seed');
 S=Uint32Array.of(9,7,5,3);
@@ -32,8 +32,8 @@ getPointOnLine=(a,b,perc)=>{  // relative to a !!
 
 
 PAUSED=false;
-DEPTH=7;
-TEXTURE = true;  // if false, fill a rectangle with the single color, for faster test rendering
+DEPTH=1;
+TEXTURE = false;  // if false, fill a rectangle with the single color, for faster test rendering
 PALETTE = [[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]]
 //PALETTE = PALETTE.map(c=>hslToStr(...c))
 
@@ -205,7 +205,7 @@ class Flake {
     }
 
     fillFrame(){
-        if (this.area<999){  //} && this.counter>60){
+        if (this.area<79999){  //} && this.counter>60){
             return
         }  // don't fill small triangles for now
 //        this.counter++;
@@ -292,6 +292,59 @@ if (TEXTURE){
     X.globalAlpha=1;
     FLAKES.forEach(walk=>walk.draw())
 }
+
+
+testRandomWalkInRandomTriangle=()=>{
+    addOrSubtract=(v,d)=>{
+        let add = v+d;
+
+        if (add>1){
+            return v-d;
+        } else if (add<0){
+            return v-d;
+        } else {
+            return add;
+        }
+    }
+
+    let pA = [R()*W,R()*H];
+    let pB = [R()*W,R()*H];
+    let pC = [R()*W,R()*H];
+
+    X.globalAlpha=.06;
+    walkInsideTriangle=(a,b,c,w1,w2, hue)=>{
+        // Start a random walk within a triangle with vertices a,b,c
+        // This walk will work with percentages on edge ab and ac. The percentages are w1 and w2
+        // The walk will never go outside the triangle
+        // a hue value can be used to change the color gradually
+
+        for (let i=0; i<9999; i++){
+
+            w1 = addOrSubtract(w1,(R()-0.5)/99)
+            w2 = addOrSubtract(w2,(R()-0.5)/99)
+
+            if (w1 + w2 > 1){
+                w1 = 1 - w2
+    //            w2 = 1 - w1
+            }
+
+            if (i%100<1){
+                hue += 1;
+            }
+
+            X.fillStyle = hslToStr(hue,50,50)
+            X.fillRect(
+                a[0] + w1 * (b[0]-a[0]) + w2 * (c[0]-a[0]),
+                a[1] + w1 * (b[1]-a[1]) + w2 * (c[1]-a[1]),
+                4,4);
+        }
+    }
+
+    walkInsideTriangle(pA,pB,pC, 0,0, 120);
+    walkInsideTriangle(pB, pA, pC, 1,0, 0);
+    walkInsideTriangle(pB, pA, pC, 0.5,0.5, 240);
+}
+
 
 
 document.addEventListener('keydown',function(e){if (e.code === 'Space'){e.preventDefault();PAUSED = !PAUSED;!PAUSED&&A(T)}});
