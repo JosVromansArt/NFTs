@@ -1,4 +1,11 @@
-SEED=Math.random()*99999999999|0;
+const urlParams = new URLSearchParams(window.location.search);
+DEPTH = urlParams.get('depth', 3);
+TEXTURE = urlParams.get('texture')==='off'?false:true;
+SEED = urlParams.get('seed');
+
+if (SEED===null){
+    SEED=Math.random()*99999999999|0;
+}
 //SEED = -1338485593;
 //SEED = 1327686124;
 console.log(SEED, 'seed');
@@ -32,8 +39,8 @@ getPointOnLine=(a,b,perc)=>{  // relative to a !!
 
 
 PAUSED=false;
-DEPTH=1;
-TEXTURE = false;  // if false, fill a rectangle with the single color, for faster test rendering
+//DEPTH=6;
+//TEXTURE = true;  // if false, fill a rectangle with the single color, for faster test rendering
 PALETTE = [[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]]
 //PALETTE = PALETTE.map(c=>hslToStr(...c))
 
@@ -160,7 +167,7 @@ class Flake {
             }
     }
 
-    pointInside(px, py) {
+    pointInside(px, py) {  // TODO: make second point inside, with percentage on 2 edges being between 0 and 1 (sum)
         let [ax, ay, bx, by, cx, cy] = [...this.a,...this.b,...this.c];
 
         let A1 = getTriangleArea(px,py,ax,ay,bx,by);
@@ -204,18 +211,31 @@ class Flake {
         this.previous = newPrevious
     }
 
-    fillFrame(){
-        if (this.area<79999){  //} && this.counter>60){
-            return
-        }  // don't fill small triangles for now
+
+    fillTriangle(){  // always call this one. And decide with a setting which way of filling the triangle
+        X.globalAlpha=1;
+        X.globalCompositeOperation='source-over';
+        this.draw();
+//        X.globalCompositeOperation='lighter';
+        X.globalCompositeOperation='multiply';
+//        X.globalCompositeOperation='source-over';
+//        this.draw();
+        X.globalAlpha=1;
+        this.fillFrameSLOW();
+    }
+
+    fillFrameSLOW(){  // original texture, really slow rendering
+//        if (this.area<79999){  //} && this.counter>60){
+//            return
+//        }  // don't fill small triangles for now
 //        this.counter++;
 //        console.log(this.counter);
 
 
         // start a random walk to fill the triangle
 
-        X.globalAlpha=0.04;
-        for (let i=0; i<999; i++){
+//        X.globalAlpha=0.04;
+        for (let i=0; i<9999; i++){
 //            this.determineNext(0.002, 6);  // sets this.previous
 //            this.determineNext(0.008, 6);  // sets this.previous
             this.determineNext(0.07, 9);  // sets this.previous
@@ -281,10 +301,12 @@ if (TEXTURE){
     X.globalAlpha=.02;
     X.globalCompositeOperation='multiply';
 
+    let triangleIndex = 0;
     T=_=>{
-        FLAKES.forEach(walk=>walk.fillFrame())
-        FRAME_COUNTER ++;
-        document.title = `${PAUSED?'[Paused]':'Flakes'} ${(FRAME_COUNTER/MAX_FRAMES*100|0)}%`
+//        FLAKES.forEach(walk=>walk.fillFrame())
+        FLAKES[triangleIndex].fillTriangle();
+        triangleIndex ++;
+        document.title = `${PAUSED?'[Paused]':'Flakes'} ${(triangleIndex/FLAKES.length*100|0)}%`
         if (!PAUSED&&FRAME_COUNTER<MAX_FRAMES){A(T)}
     }
     A(T);
