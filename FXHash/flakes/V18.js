@@ -2,6 +2,7 @@ const urlParams = new URLSearchParams(window.location.search);
 DEPTH = urlParams.get('depth')||3;
 TEXTURE = urlParams.get('texture')==='off'?false:true;
 SEED = urlParams.get('seed')||Math.random()*99999999999|0;
+COMPOSITION_TYPE = urlParams.get('composition');
 DIVLINES = urlParams.get('divlines');
 if (!(DIVLINES==='black' || DIVLINES==='white')){
     DIVLINES='none'
@@ -54,7 +55,7 @@ getPointOnLine=(a,b,perc)=>{  // relative to a !!
 PAUSED=false;
 
 determineCompositionType=(rv=R())=>rv<.2?'Z':(rv<.4?'A':(rv<.6?'B':(rv<.8?'C':'G')));
-COMPOSITION_TYPE = determineCompositionType();
+if (COMPOSITION_TYPE===null){COMPOSITION_TYPE = determineCompositionType()}
 
 
 getDistortedGrid=()=>{
@@ -64,8 +65,10 @@ getDistortedGrid=()=>{
     let stepx = W/cols;
     let stepy = H/rows;
 
-    let xoff = stepx/3;  // TODO: can be distorted or not
-    let yoff = stepy/3;
+    let xoff=0
+    let yoff=0;
+    if (R()<.5){xoff = stepx/3}
+    if (R()<.5){yoff = stepx/3}
 
     let coords=[]
     for (let i=0;i<=cols;i++){
@@ -82,8 +85,18 @@ getDistortedGrid=()=>{
     let trigs = []
     for (let i=0;i<cols;i++){
         for (let j=0;j<rows;j++){
-            trigs.push([coords[i][j], coords[i+1][j], coords[i+1][j+1]])
-            trigs.push([coords[i][j], coords[i+1][j+1], coords[i][j+1]])
+            let aa = coords[i][j];
+            let bb = coords[i+1][j];
+            let cc = coords[i+1][j+1];
+            let dd = coords[i][j+1];
+
+            if (R()<.5){
+                trigs.push([aa,bb,dd])
+                trigs.push([bb,dd,cc])
+            } else {
+                trigs.push([aa,cc,bb])
+                trigs.push([aa,cc,dd])
+            }
         }
     }
     return trigs
