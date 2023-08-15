@@ -21,8 +21,23 @@ SCALE = (WW/WH>2/3)?WH/H:WW/W;  // the scale will depend on the longest or short
 C.style.width=`${W*SCALE}px`;
 C.style.height=`${H*SCALE}px`;
 
+
+//PALETTES = [
+//	[[228, 13, 8],[160, 6, 81],[228, 4, 24],[208, 8, 52],[217, 15, 37],[58, 81, 88],[217, 23, 65],[40, 51, 16],[62, 16, 63],[51, 23, 45],[50, 57, 73],[48, 82, 36],[213, 82, 64],[240, 74, 73]],
+//	[[0, 0, 9],[150, 1, 38],[185, 96, 71],[255, 2, 64],[6, 12, 84],[164, 38, 45],[137, 11, 24],[184, 42, 50],[197, 86, 66],[122, 73, 80],[47, 90, 68],[167, 37, 34],[332, 42, 45],[75, 33, 98]],
+//	[[0, 100, 7],[44, 100, 87],[40, 68, 74],[256, 57, 18],[26, 45, 64],[270, 60, 28],[340, 23, 77],[15, 35, 54],[210, 66, 45],[326, 30, 36],[359, 39, 22],[310, 18, 55],[25, 42, 34],[29, 70, 60]],
+//	[[0, 0, 0],[218, 26, 18],[27, 28, 56],[36, 100, 47],[35, 33, 90],[210, 26, 31],[340, 44, 47],[100, 23, 70],[206, 100, 41],[211, 34, 51],[191, 100, 41],[278, 43, 44],[27, 45, 13],[216, 33, 81]],
+//	[[33, 14, 84],[7, 100, 2],[3, 70, 48],[289, 20, 22],[42, 61, 34],[41, 78, 14],[3, 55, 39],[30, 40, 58],[19, 72, 46],[261, 42, 30],[261, 64, 10],[165, 2, 34],[41, 48, 70],[9, 63, 60]],
+//	[[0, 0, 0],[215, 53, 46],[61, 100, 86],[2, 85, 13],[61, 100, 78],[38, 87, 60],[32, 57, 25],[55, 95, 66],[27, 84, 57],[24, 67, 45],[37, 85, 69],[16, 71, 34],[212, 38, 64],[338, 78, 64]],
+//	[[293, 82, 98],[255, 5, 17],[173, 12, 29],[177, 16, 45],[180, 93, 89],[162, 23, 59],[27, 21, 37],[225, 29, 39],[164, 50, 74],[34, 45, 24],[68, 31, 41],[64, 51, 62],[83, 20, 67],[54, 34, 51]],
+//	[[0, 0, 2],[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]],
+//    [[312, 3, 78],[228, 9, 23],[33, 56, 77],[4, 55, 68],[181, 46, 60],[1, 48, 49],[355, 18, 73],[183, 38, 39],[0, 0, 0],[0, 0, 100],[0, 100, 100]],
+//]
+//PALETTE = PALETTES[R()*PALETTES.length|0];
+PALETTE = [[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]]
+
 X=C.getContext('2d');
-X.fillStyle='#fff';
+X.fillStyle='#000';
 X.fillRect(0,0,W,H);
 
 
@@ -37,10 +52,6 @@ getPointOnLine=(a,b,perc)=>{  // relative to a !!
 
 
 PAUSED=false;
-//DEPTH=6;
-//TEXTURE = true;  // if false, fill a rectangle with the single color, for faster test rendering
-PALETTE = [[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]]
-//PALETTE = PALETTE.map(c=>hslToStr(...c))
 
 determineCompositionType=(rv=R())=>rv<.1?'Z':(rv<.3?'A':(rv<.66?'B':'C'));
 COMPOSITION_TYPE = determineCompositionType();
@@ -285,13 +296,21 @@ class Flake {
 START_TRIANGLES = getStartTriangles();
 
 FLAKES = [];
+TINY_FLAKES = [];
 subdivide=(a,b,c,depth=0)=>{
     let inside = random_in_triangle(a,b,c)
 
     if (depth>DEPTH || (depth>1&&R()<.2)){
         let trig = [a,b,c,inside];
         trig.color=PALETTE[R()*PALETTE.length|0];
-        [[0,1,45],[2,1,60],[0,2,75]].map(v=>{FLAKES.push(new Flake(trig[v[0]],trig[v[1]],trig[3],trig.color[0],trig.color[1],v[2]))})
+        [[0,1,45],[2,1,60],[0,2,75]].map(v=>{
+            let flake = new Flake(trig[v[0]],trig[v[1]],trig[3],trig.color[0],trig.color[1],v[2]);
+            if (flake.area<300){
+                TINY_FLAKES.push(flake);
+            } else {
+                FLAKES.push(flake);
+            }
+        })
         return
     }
     subdivide(inside, a,b, depth+1)
@@ -299,7 +318,8 @@ subdivide=(a,b,c,depth=0)=>{
     subdivide(inside, c,a, depth+1)
 }
 START_TRIANGLES.forEach(t=>subdivide(t[0], t[1], t[2]))
-
+FLAKE_COUNT = FLAKES.length;
+TINY_FLAKE_COUNT = TINY_FLAKES.length;
 
 FRAME_COUNTER = 0;
 MAX_FRAMES = 340;
@@ -309,19 +329,62 @@ console.table({
     'Composition': COMPOSITION_TYPE,
     'Depth': DEPTH,
     'Detail Division Lines': DIVLINES,
+    'Flake Count': FLAKE_COUNT,
+    'Tiny Flake Count': TINY_FLAKE_COUNT,
 })
 
 if (TEXTURE){
-    X.globalAlpha=.02;
-    X.globalCompositeOperation='multiply';
-
     let triangleIndex = 0;
+    let totalTriangles = FLAKE_COUNT + TINY_FLAKE_COUNT;
+    let batchSize = 50;
+
     T=_=>{
-//        FLAKES.forEach(walk=>walk.fillFrame())
-        FLAKES[triangleIndex].fillTriangle();
-        triangleIndex ++;
-        document.title = `${PAUSED?'[Paused]':'Flakes'} ${(triangleIndex/FLAKES.length*100|0)}%`
-        if (!PAUSED&&triangleIndex<FLAKES.length){A(T)}
+
+        if (triangleIndex<TINY_FLAKE_COUNT){
+            // handle a batch of tiny flakes
+            for (let ii=0;ii<batchSize;ii++){
+                if (ii+triangleIndex>TINY_FLAKE_COUNT-1){break}
+
+                let f = TINY_FLAKES[triangleIndex+ii];
+
+                X.globalCompositeOperation='source-over';
+//                X.globalAlpha=.9;
+//                f.l=50;
+//                f.s=99;
+//
+//
+//                let index = ((f.a[1]/H)*PALETTE.length)|0
+//
+//                if (index>=PALETTE.length){
+//                    index = PALETTE.length*R()|0
+//                }
+//
+//                f.hue = PALETTE[index][0];
+////                f.h=90;
+//                f.draw();
+
+                X.globalAlpha=.01;
+                X.globalCompositeOperation='lighter';
+                X.lineWidth=1;
+
+                draw_y(f.a,f.b,f.c, 0,'#fff', 2)
+
+            }
+
+            triangleIndex += batchSize;
+            triangleIndex = Math.min(TINY_FLAKE_COUNT,triangleIndex);
+
+        } else {
+            X.globalAlpha=.02;
+            X.globalCompositeOperation='multiply';
+            // handle a normal flake
+        //        FLAKES.forEach(walk=>walk.fillFrame())
+            FLAKES[triangleIndex-TINY_FLAKE_COUNT].fillTriangle();
+            triangleIndex ++;
+        }
+
+        document.title = `${PAUSED?'[Paused]':'Flakes'} ${(triangleIndex/totalTriangles*100|0)}%`
+        if (!PAUSED&&triangleIndex<totalTriangles){A(T)}
     }
     A(T);
 } else {
