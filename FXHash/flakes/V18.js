@@ -53,11 +53,45 @@ getPointOnLine=(a,b,perc)=>{  // relative to a !!
 
 PAUSED=false;
 
-determineCompositionType=(rv=R())=>rv<.1?'Z':(rv<.3?'A':(rv<.66?'B':'C'));
+determineCompositionType=(rv=R())=>rv<.2?'Z':(rv<.4?'A':(rv<.6?'B':(rv<.8?'C':'G')));
 COMPOSITION_TYPE = determineCompositionType();
 
 
+getDistortedGrid=()=>{
+    let rows = 2+R()*4|0;
+    let cols = 2+R()*4|0;
+
+    let stepx = W/cols;
+    let stepy = H/rows;
+
+    let xoff = stepx/3;  // TODO: can be distorted or not
+    let yoff = stepy/3;
+
+    let coords=[]
+    for (let i=0;i<=cols;i++){
+        let coords_row = []
+        for (let j=0;j<=rows;j++){
+            coords_row.push([
+                (i===0||i===cols)?i*stepx:i*stepx+R()*xoff*2-xoff,
+                (j===0||j===rows)?j*stepy:j*stepy+R()*yoff*2-yoff,
+            ])
+        }
+        coords.push(coords_row);
+    }
+
+    let trigs = []
+    for (let i=0;i<cols;i++){
+        for (let j=0;j<rows;j++){
+            trigs.push([coords[i][j], coords[i+1][j], coords[i+1][j+1]])
+            trigs.push([coords[i][j], coords[i+1][j+1], coords[i][j+1]])
+        }
+    }
+    return trigs
+}
+
+
 getStartTriangles=_=>{
+    if (COMPOSITION_TYPE==='G'){return getDistortedGrid()}
     let verts = [[0,0],[W,0],[W,H],[0,H]];
     [
         [1,2],  // BC  index 4
