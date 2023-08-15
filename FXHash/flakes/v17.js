@@ -11,7 +11,7 @@ S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
 [...SEED+'ThxPiter'].map(c=>R(S[0]^=c.charCodeAt()*S[3]));
 A=window.requestAnimationFrame;
-FILE_NAME = `FLAKES_${SEED}_D${DEPTH}_`;
+FILE_NAME = `FLAKES_V17_${SEED}_D${DEPTH}_`;
 
 C.width=W=1200;
 C.height=H=1800;
