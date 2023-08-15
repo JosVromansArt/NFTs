@@ -2,6 +2,11 @@ const urlParams = new URLSearchParams(window.location.search);
 DEPTH = urlParams.get('depth')||3;
 TEXTURE = urlParams.get('texture')==='off'?false:true;
 SEED = urlParams.get('seed')||Math.random()*99999999999|0;
+DIVLINES = urlParams.get('divlines');
+if (!(DIVLINES==='black' || DIVLINES==='white')){
+    DIVLINES='none'
+}
+
 S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
 [...SEED+'ThxPiter'].map(c=>R(S[0]^=c.charCodeAt()*S[3]));
@@ -77,19 +82,17 @@ function random_in_triangle(a,b,c){
 
 
 // recursively draw division lines
-draw_y=(a,b,c, iter=0,color='#000')=>{
+draw_y=(a,b,c, iter=0,color='#000', max_iter=2)=>{
     let inside = random_in_triangle(a,b,c);
 
     draw_line(a, inside, color, 1)
     draw_line(b, inside, color, 1)
     draw_line(c, inside, color, 1)
 
-    X.lineWidth=.6;
-
-    if (iter<2){
-        draw_y(a,b,inside,iter+1);
-        draw_y(b,c,inside,iter+1);
-        draw_y(c,a,inside,iter+1);
+    if (iter<max_iter){
+        draw_y(a,b,inside,iter+1, color, max_iter);
+        draw_y(b,c,inside,iter+1, color, max_iter);
+        draw_y(c,a,inside,iter+1, color, max_iter);
     }
 }
 
@@ -214,6 +217,19 @@ class Flake {
 //        this.draw();
         X.globalAlpha=1;
         this.fillFrameSLOW();
+
+        // add subdivision lines on individual flakes, only when black or white has been specified
+        if (DIVLINES==='black'){
+            X.globalAlpha=.5;
+            X.globalCompositeOperation='multiply';
+            X.lineWidth=1;
+            draw_y(this.a,this.b,this.c, 0,'#222', 3)
+        } else if (DIVLINES==='white'){
+            X.globalAlpha=.2;
+            X.globalCompositeOperation='source-over';
+            X.lineWidth=3;
+            draw_y(this.a,this.b,this.c, 0,'#fff', 3)
+        }
     }
 
     fillFrameSLOW(){  // original texture, really slow rendering
@@ -292,6 +308,7 @@ console.table({
     'Seed': SEED,
     'Composition': COMPOSITION_TYPE,
     'Depth': DEPTH,
+    'Detail Division Lines': DIVLINES,
 })
 
 if (TEXTURE){
