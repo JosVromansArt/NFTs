@@ -1,19 +1,12 @@
 const urlParams = new URLSearchParams(window.location.search);
-DEPTH = urlParams.get('depth', 3);
+DEPTH = urlParams.get('depth')||3;
 TEXTURE = urlParams.get('texture')==='off'?false:true;
-SEED = urlParams.get('seed');
-
-if (SEED===null){
-    SEED=Math.random()*99999999999|0;
-}
-//SEED = -1338485593;
-//SEED = 1327686124;
-console.log(SEED, 'seed');
+SEED = urlParams.get('seed')||Math.random()*99999999999|0;
 S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
 [...SEED+'ThxPiter'].map(c=>R(S[0]^=c.charCodeAt()*S[3]));
 A=window.requestAnimationFrame;
-FILE_NAME = `FLAKES_`;
+FILE_NAME = `FLAKES_${SEED}_D${DEPTH}_`;
 
 C.width=W=1200;
 C.height=H=1800;
@@ -46,7 +39,6 @@ PALETTE = [[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],
 
 determineCompositionType=(rv=R())=>rv<.1?'Z':(rv<.3?'A':(rv<.66?'B':'C'));
 COMPOSITION_TYPE = determineCompositionType();
-console.log(COMPOSITION_TYPE, '   composition')
 
 
 getStartTriangles=_=>{
@@ -296,6 +288,11 @@ START_TRIANGLES.forEach(t=>subdivide(t[0], t[1], t[2]))
 FRAME_COUNTER = 0;
 MAX_FRAMES = 340;
 
+console.table({
+    'Seed': SEED,
+    'Composition': COMPOSITION_TYPE,
+    'Depth': DEPTH,
+})
 
 if (TEXTURE){
     X.globalAlpha=.02;
@@ -307,7 +304,7 @@ if (TEXTURE){
         FLAKES[triangleIndex].fillTriangle();
         triangleIndex ++;
         document.title = `${PAUSED?'[Paused]':'Flakes'} ${(triangleIndex/FLAKES.length*100|0)}%`
-        if (!PAUSED&&FRAME_COUNTER<MAX_FRAMES){A(T)}
+        if (!PAUSED&&triangleIndex<FLAKES.length){A(T)}
     }
     A(T);
 } else {
@@ -400,6 +397,7 @@ function get_timestamp(){
     sec=pad0(date.getSeconds());
     return `${year}${month}${day}_${hour}${mins}${sec}`
 }
+var link = document.createElement('a');
 function save_image(prefix){
     let file_name = prefix + get_timestamp() + '_' + FILE_NAME;
     link.setAttribute('download', file_name);   // add fxhash and datetime stamp?
