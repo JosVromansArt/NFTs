@@ -3,6 +3,7 @@ DEPTH = urlParams.get('depth')||3;
 TEXTURE = urlParams.get('texture')==='off'?false:true;
 SEED = urlParams.get('seed')||Math.random()*99999999999|0;
 COMPOSITION_TYPE = urlParams.get('composition');
+TEXTURE_TYPE = urlParams.get('texture_type')|1+Math.random()*2|0;
 DIVLINES = urlParams.get('divlines');
 if (!(DIVLINES==='black' || DIVLINES==='white')){
     DIVLINES='none'
@@ -171,6 +172,20 @@ function draw_triangle(a,b,c,color='black'){
 }
 
 
+S2 = 90;  // satyuration values for the random walk on the texture
+S3 = 10;
+gA = 1;  // global Alpha before texture rendering
+DN1 =0.07;
+DN2 = 9;
+if (TEXTURE_TYPE===2){  // 60 80 40 for the new texture
+    S2 = 80;  // Flake palette initialization saturation value 2
+    S3 = 40;  // Flake palette initialization saturation value 3
+    gA=0.4;
+    DN1 = 0.09;
+    DN2 = 16;
+}
+
+
 class Flake {
     // A Flake is one 3th of a parent triangle. So it has 2 siblings with a similar hue but different lighting
     constructor(a,b,c, hue,s,l){
@@ -184,8 +199,8 @@ class Flake {
         this.l=l;
         this.palette = [
             hslToStr(hue, 60, l),
-            hslToStr(hue, 90, l),
-            hslToStr(hue, 10, l),
+            hslToStr(hue, S2, l),
+            hslToStr(hue, S3, l),
         ]
 
         this.area = getTriangleArea(...triBound);
@@ -206,6 +221,16 @@ class Flake {
             this.previous.push(sp)
         }
         this.counter=0;  // keep track of frame in the case of texturing
+    }
+
+    getElongation() {
+        let distances = [  // calculate distances squared. return root of elongation
+            [this.a, this.b],
+            [this.b, this.c],
+            [this.c, this.a]
+        ].map(pts=>(pts[1][0] - pts[0][0])**2 + (pts[1][1] - pts[0][1]) ** 2);
+
+        return Math.sqrt(Math.max(...distances) / Math.min(...distances));
     }
 
     getPointOnBbox(){
@@ -301,8 +326,7 @@ class Flake {
 
 
         // start a random walk to fill the triangle
-
-//        X.globalAlpha=0.04;
+        X.globalAlpha=gA;
         for (let i=0; i<9999; i++){
 //            this.determineNext(0.002, 6);  // sets this.previous
 //            this.determineNext(0.008, 6);  // sets this.previous
@@ -354,6 +378,8 @@ subdivide=(a,b,c,depth=0)=>{
         trig.color=PALETTE[R()*PALETTE.length|0];
         [[0,1,42],[2,1,60],[0,2,85]].map(v=>{
             let flake = new Flake(trig[v[0]],trig[v[1]],trig[3],trig.color[0],trig.color[1],v[2]);
+//            if (flake.getElongation()>3){
+ //||flake.getElongation()>5){
             if (flake.area<300){
                 TINY_FLAKES.push(flake);
             } else {
@@ -381,6 +407,7 @@ console.table({
     'Flake Count': FLAKE_COUNT,
     'Tiny Flake Count': TINY_FLAKE_COUNT,
     'Palette Index': PALETTE_INDEX,
+    'Texture type': TEXTURE_TYPE,
 })
 
 if (TEXTURE){
