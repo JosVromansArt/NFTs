@@ -115,13 +115,15 @@ function download_svg_file() {
   let path_str = '';
   PLOT_LINES.forEach(pl=>path_str += `M ${pl[0][0]} ${pl[0][1]} L ${pl[1][0]} ${pl[1][1]} `)
 
+  LINE_WIDTH=document.getElementById('line_width').value;
+
   let svg_file = `<svg
   xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 210 297"
   width="210mm"
   height="297mm"
 >
-<path d="${path_str}" />
+<path d="${path_str}" fill="none" stroke="black" stroke-width="${LINE_WIDTH}" />
 </svg>
 `
   const base64doc = btoa(unescape(svg_file));
