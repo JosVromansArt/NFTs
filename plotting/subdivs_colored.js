@@ -7,6 +7,7 @@ LAYER2 = [];
 LAYER3 = [];
 LAYER4 = [];
 LAYER5 = [];
+LAYERS = [];
 
 
 getRandomInt=_=>Math.random()*256|0;
@@ -139,7 +140,7 @@ function triangle_subdivision(ctx, canvas){
 
     ctx.lineWidth = line_width*SCALE;
 
-    var LAYERS = [
+    LAYERS = [
         OUTER_FRAME,
         LAYER1,
         LAYER2,
@@ -164,12 +165,9 @@ function get_random_strategy(){
 }
 
 
-function download_svg_file() {
-  const a = document.createElement('a');
-  const e = new MouseEvent('click');
-
+constructSVGpath=(layer, color)=>{
   let path_str = '';
-  PLOT_LINES.forEach(pl=>path_str += `M ${pl[0][0]} ${pl[0][1]} L ${pl[1][0]} ${pl[1][1]} `)
+  layer.forEach(pl=>path_str += `M ${pl[0][0]} ${pl[0][1]} L ${pl[1][0]} ${pl[1][1]} `)
 
   LINE_WIDTH=document.getElementById('line_width').value;
 
@@ -179,14 +177,33 @@ function download_svg_file() {
   width="210mm"
   height="297mm"
 >
-<path d="${path_str}" fill="none" stroke="black" stroke-width="${LINE_WIDTH}" />
+<path d="${path_str}" fill="none" stroke="${color}" stroke-width="${LINE_WIDTH}" />
 </svg>
 `
-  const base64doc = btoa(unescape(svg_file));
+  return btoa(unescape(svg_file));
 
-  a.download = 'Triangle_subdivision' + document.getElementById('strategy').value + '.svg';
-  a.href = 'data:text/html;base64,' + base64doc;
-  a.dispatchEvent(e);
+}
+
+
+function download_svg_file() {
+
+    for (let index=0; index<6; index++){
+        let layer = LAYERS[index];
+        if (layer.length===0){continue}
+
+        let a = document.createElement('a');
+        let e = new MouseEvent('click');
+        const base64doc = constructSVGpath(layer, COLORS[index]);
+
+        let index_str = `_${index}`;
+        if (index===0){
+            index_str = '_0_outer_frame'
+        }
+
+        a.download = 'Triangle_subdivision' + document.getElementById('strategy').value + index_str + '.svg';
+        a.href = 'data:text/html;base64,' + base64doc;
+        a.dispatchEvent(e);
+    }
 }
 
 
