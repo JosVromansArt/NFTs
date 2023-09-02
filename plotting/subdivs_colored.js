@@ -1,9 +1,7 @@
 // License: CC BY-NC 4.0
 // Created by: www.josvromans.com
 SCALE = 3;
-PLOT_LINES = [];
-
-
+OUTER_FRAME = [];  // just the square around the artwork, can be colored in a seperate color
 LAYER1 = [];
 LAYER2 = [];
 LAYER3 = [];
@@ -12,24 +10,17 @@ LAYER5 = [];
 
 
 getRandomInt=_=>Math.random()*256|0;
-function get_random_color(){
-    return 'rgb(' + getRandomInt(0, 255) + ',' +getRandomInt(0, 255) + ',' +getRandomInt(0, 255) + ')';
-}
 
-COLORS = ['red', 'black', 'blue', 'green','orange'];
-COLORS = [
-    get_random_color(),
-    get_random_color(),
-    get_random_color(),
-    get_random_color(),
-    get_random_color(),
-    get_random_color(),
-];
+vtoh=_=>{
+    let rv = getRandomInt(0,255).toString(16);
+    if (rv.length===1){
+        rv = '0' + rv;
+    }
+    return rv;
+}
 
 
 //ALL_LINES = []; // populate with the lines for each layer
-
-
 
 
 function get_frame_lines(tl, tr, br, bl, extra){
@@ -44,7 +35,7 @@ round2=v=>v.toFixed(2);
 convert_co=(co)=>[round2(co[0]), round2(co[1])]
 
 function clear_canvas(ctx, canvas){
-    ctx.fillStyle = document.getElementById('background_color').value;
+    ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
@@ -74,9 +65,23 @@ function triangle_subdivision(ctx, canvas){
     var iterations = document.getElementById('iterations').value;
     var strategy = parse_strategy(document.getElementById('strategy').value);
     clear_canvas(ctx, canvas);
-    var divisor = parseFloat(document.getElementById('divisor').value);
-    var color = document.getElementById('current_color').value;
+    var divisor = 2; //parseFloat(document.getElementById('divisor').value);
+    var color0 = document.getElementById('color0').value;
+    var color1 = document.getElementById('color1').value;
+    var color2 = document.getElementById('color2').value;
+    var color3 = document.getElementById('color3').value;
+    var color4 = document.getElementById('color4').value;
+    var color5 = document.getElementById('color5').value;
     var line_width = document.getElementById('line_width').value;
+
+    COLORS = [
+        color0,
+        color1,
+        color2,
+        color3,
+        color4,
+        color5,
+    ]
 
     MARGIN = 16;
     let yoff = (297-210)/2;
@@ -87,19 +92,19 @@ function triangle_subdivision(ctx, canvas){
     var bottom_right = [210-MARGIN, 297-MARGIN-yoff];
 
     // the outer frame, double lines in black
-    PLOT_LINES = get_frame_lines(top_left, top_right, bottom_right, bottom_left, MARGIN*.12);
-    PLOT_LINES = PLOT_LINES.concat(get_frame_lines(top_left, top_right, bottom_right, bottom_left, MARGIN*.18));
+    OUTER_FRAME = get_frame_lines(top_left, top_right, bottom_right, bottom_left, MARGIN*.12);
+    OUTER_FRAME = OUTER_FRAME.concat(get_frame_lines(top_left, top_right, bottom_right, bottom_left, MARGIN*.18));
+
+    if (!document.getElementById('cb0').checked){
+        OUTER_FRAME=[];
+    }
 
     LAYER1 = [];
     LAYER2 = [];
     LAYER3 = [];
     LAYER4 = [];
     LAYER5 = [];
-
-
-
     function subdivide(ctx, vertices, i){
-        ctx.lineWidth = line_width;
         var strategy_length = strategy.length;
         if (i < iterations) {
             var subdivide_index = strategy[i % strategy_length];
@@ -111,26 +116,19 @@ function triangle_subdivision(ctx, canvas){
             // Only the subdivision line will be added to 'lines to be plotted'. So not the entire triangle.
             // uncomment the following statement to only get the final subdivision iteration (less lines to draw)
 
-            if (i===iterations-6){  //
+            if (i===iterations-6 && document.getElementById('cb1').checked){  //
                LAYER1.push([convert_co(midpoint),convert_co(subdivide_vertex)])
-            } else if (i===iterations-5){  //
+            } else if (i===iterations-5 && document.getElementById('cb2').checked){  //
                LAYER2.push([convert_co(midpoint),convert_co(subdivide_vertex)])
-            } else if (i===iterations-4){  //
+            } else if (i===iterations-4 && document.getElementById('cb3').checked){  //
                LAYER3.push([convert_co(midpoint),convert_co(subdivide_vertex)])
-            } else if (i===iterations-3){  //
+            } else if (i===iterations-3 && document.getElementById('cb4').checked){  //
                LAYER4.push([convert_co(midpoint),convert_co(subdivide_vertex)])
-            } else if (i===iterations-2){  //
+            } else if (i===iterations-2 && document.getElementById('cb5').checked){  //
                LAYER5.push([convert_co(midpoint),convert_co(subdivide_vertex)])
             }
-
-
-//            if (i>iterations-2){  //
-//               PLOT_LINES.push([convert_co(midpoint),convert_co(subdivide_vertex)])
-//            }
         }
     }
-
-
 
     // add the 4 triangles that form a square, and share a vertex in the center of the square
     // calculations will be done for every triangle individually..
@@ -139,19 +137,21 @@ function triangle_subdivision(ctx, canvas){
     subdivide(ctx, [center, bottom_left, top_left], 0);
     subdivide(ctx, [center, top_right, bottom_right], 0);
 
-    console.log(PLOT_LINES.length, ' line count')
+    ctx.lineWidth = line_width*SCALE;
 
-    ctx.strokeStyle=COLORS[1];
-    LAYER2.forEach(pl=>{ctx.beginPath();ctx.moveTo(pl[0][0]*SCALE, pl[0][1]*SCALE);ctx.lineTo(pl[1][0]*SCALE, pl[1][1]*SCALE);ctx.stroke();})
-    ctx.strokeStyle=COLORS[2];
-    LAYER3.forEach(pl=>{ctx.beginPath();ctx.moveTo(pl[0][0]*SCALE, pl[0][1]*SCALE);ctx.lineTo(pl[1][0]*SCALE, pl[1][1]*SCALE);ctx.stroke();})
-    ctx.strokeStyle=COLORS[3];
-    LAYER4.forEach(pl=>{ctx.beginPath();ctx.moveTo(pl[0][0]*SCALE, pl[0][1]*SCALE);ctx.lineTo(pl[1][0]*SCALE, pl[1][1]*SCALE);ctx.stroke();})
-    ctx.strokeStyle=COLORS[4];
-    LAYER5.forEach(pl=>{ctx.beginPath();ctx.moveTo(pl[0][0]*SCALE, pl[0][1]*SCALE);ctx.lineTo(pl[1][0]*SCALE, pl[1][1]*SCALE);ctx.stroke();})
+    var LAYERS = [
+        OUTER_FRAME,
+        LAYER1,
+        LAYER2,
+        LAYER3,
+        LAYER4,
+        LAYER5,
+    ]
 
-    ctx.strokeStyle='#000';
-    PLOT_LINES.forEach(pl=>{ctx.beginPath();ctx.moveTo(pl[0][0]*SCALE, pl[0][1]*SCALE);ctx.lineTo(pl[1][0]*SCALE, pl[1][1]*SCALE);ctx.stroke();})
+    for (let i=0; i<6; i++){
+        ctx.strokeStyle=COLORS[i];
+        LAYERS[i].forEach(pl=>{ctx.beginPath();ctx.moveTo(pl[0][0]*SCALE, pl[0][1]*SCALE);ctx.lineTo(pl[1][0]*SCALE, pl[1][1]*SCALE);ctx.stroke();})
+    }
 }
 
 function get_random_strategy(){
@@ -198,12 +198,19 @@ document.addEventListener('DOMContentLoaded', function(event) {
     var ctx = canvas.getContext('2d');
     ctx.lineJoin='round'
 
+    document.getElementById('randomColors').addEventListener("mouseup", function() {
+        ['color0','color1','color2','color3','color4','color5'].map(c=>{
+            document.getElementById(c).value = '#' + vtoh() + vtoh() + vtoh();
+        })
+        triangle_subdivision(ctx, canvas);
+    });
+
     document.getElementById('start').addEventListener("mouseup", function() {
         triangle_subdivision(ctx, canvas);
     });
-    document.getElementById('clear').addEventListener("mouseup", function() {
-        clear_canvas(ctx, canvas);
-    });
+//    document.getElementById('clear').addEventListener("mouseup", function() {
+//        clear_canvas(ctx, canvas);
+//    });
     document.getElementById('download').addEventListener("mouseup", function() {
         var link = document.getElementById('link');
         link.setAttribute('download', 'Triangle_subdivision' + document.getElementById('strategy').value + '.png');
