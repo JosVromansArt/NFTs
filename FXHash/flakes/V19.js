@@ -40,6 +40,17 @@ PALETTE_INDEX = urlParams.get('palette')||R()*PALETTES.length|0;
 PALETTE = PALETTES[PALETTE_INDEX];
 
 
+//PALETTE_Screenshot_from_2023_05_16_21_42_03=['#ffffff','#9e9e9e','#67b7ee','#77c1f4','#67ceee','#cbcbcb','#6767ee','#7e67ee','#8ac3f9','#9e8af9','#6046de','#55abe6','#7777f4','#778cf4','#77cdf4','#679fee','#8d77f4','#6e54e6','#3b85ba','#6788ee','#77acf4','#47b9de','#8b8af9','#5339d5','#489fde','#ba8af9','#4786de','#67abee','#3a94d5','#54c3e6','#5593e6','#cd8af9','#c267ee','#397ad5','#a067ee','#4c3ba0','#503aba','#8ad6f9','#8a9ef9','#7a47de']
+
+//PALETTE=[
+////    [206, 100, 1],
+//    [40, 67, 89],
+////    [217, 69, 12],
+//    [289, 15, 57],
+////    [210, 56, 6],
+//    [251, 23, 51],[34, 53, 83],[254, 22, 56],[6, 21, 35],[250, 6, 20],[240, 18, 12],[225, 19, 45],[224, 25, 21],[226, 35, 14],[345, 19, 25],[228, 20, 34],[224, 11, 26],[215, 48, 16],[224, 17, 29],[252, 12, 8],[348, 23, 30],[10, 14, 17],[2, 14, 63],[293, 14, 53],[236, 13, 40],[246, 12, 49],[220, 18, 53],[286, 18, 38],[346, 12, 21],[350, 15, 39],[357, 17, 50],[4, 10, 28],[238, 18, 67],[209, 72, 8],[347, 16, 45],[221, 28, 43],[206, 4, 38],[234, 23, 64],[280, 12, 28],[40, 49, 67]]
+
+
 X=C.getContext('2d');
 X.fillStyle='#000';
 X.fillRect(0,0,W,H);
@@ -143,12 +154,12 @@ function random_in_triangle(a,b,c){
 
 
 // recursively draw division lines
-draw_y=(a,b,c, iter=0,color='#000', max_iter=2)=>{
+draw_y=(a,b,c, iter=0,color='#000', max_iter=2, line_width=1)=>{
     let inside = random_in_triangle(a,b,c);
 
-    draw_line(a, inside, color, 1)
-    draw_line(b, inside, color, 1)
-    draw_line(c, inside, color, 1)
+    draw_line(a, inside, color, line_width)
+    draw_line(b, inside, color, line_width)
+    draw_line(c, inside, color, line_width)
 
     if (iter<max_iter){
         draw_y(a,b,inside,iter+1, color, max_iter);
@@ -165,11 +176,11 @@ function draw_line(a, b, color, width){
     X.lineTo(...b);
     X.stroke();
 }
-function draw_triangle(a,b,c,color='black'){
-    draw_line(a,b,color,.2)
-    draw_line(b,c,color,.2)
-    draw_line(c,a,color,.2)
-}
+//function draw_triangle(a,b,c,color='black'){
+//    draw_line(a,b,color,.2)
+//    draw_line(b,c,color,.2)
+//    draw_line(c,a,color,.2)
+//}
 
 
 S2 = 90;  // satyuration values for the random walk on the texture
@@ -301,7 +312,10 @@ class Flake {
 //        X.globalCompositeOperation='source-over';
 //        this.draw();
         X.globalAlpha=1;
-        this.fillFrameSLOW();
+
+        if (this.area>9999){
+            this.fillFrameSLOW();
+        }
 
         // add subdivision lines on individual flakes, only when black or white has been specified
         if (DIVLINES==='black'){
@@ -323,7 +337,7 @@ class Flake {
 //        }  // don't fill small triangles for now
 //        this.counter++;
 //        console.log(this.counter);
-
+        let pixelSize = 2; //this.area/30000
 
         // start a random walk to fill the triangle
         X.globalAlpha=gA;
@@ -337,16 +351,12 @@ class Flake {
             }
 
             for (let pIndex=0; pIndex<this.previous.length; pIndex++){
-
-
                 if (this.pointInside(...this.previous[pIndex])){
 
                     X.fillStyle = this.palette[pIndex];  //PALETTE[j%PALETTE.length];
-                    X.fillRect(...this.previous[pIndex],2,2);
+                    X.fillRect(...this.previous[pIndex],pixelSize, pixelSize);
 
                 }
-
-
             }
         }
     }
@@ -413,7 +423,7 @@ console.table({
 if (TEXTURE){
     let triangleIndex = 0;
     let totalTriangles = FLAKE_COUNT + TINY_FLAKE_COUNT;
-    let batchSize = 50;
+    let batchSize = 500;
 
     T=_=>{
 
@@ -452,12 +462,15 @@ if (TEXTURE){
             triangleIndex = Math.min(TINY_FLAKE_COUNT,triangleIndex);
 
         } else {
-            X.globalAlpha=.02;
-            X.globalCompositeOperation='multiply';
-            // handle a normal flake
-        //        FLAKES.forEach(walk=>walk.fillFrame())
-            FLAKES[triangleIndex-TINY_FLAKE_COUNT].fillTriangle();
-            triangleIndex ++;
+            for (let i=0; i<2; i++){
+                if (triangleIndex>=totalTriangles){break}
+                X.globalAlpha=.02;
+                X.globalCompositeOperation='multiply';
+                // handle a normal flake
+            //        FLAKES.forEach(walk=>walk.fillFrame())
+                FLAKES[triangleIndex-TINY_FLAKE_COUNT].fillTriangle();
+                triangleIndex ++;
+            }
         }
 
         document.title = `${PAUSED?'[Paused]':'Flakes'} ${(triangleIndex/totalTriangles*100|0)}%`
