@@ -5,6 +5,8 @@ SEED = urlParams.get('seed')||Math.random()*99999999999|0;
 COMPOSITION_TYPE = urlParams.get('composition');
 TEXTURE_TYPE = urlParams.get('texture_type')|1+Math.random()*2|0;
 DIVLINES = urlParams.get('divlines');
+WIDTH = urlParams.get('width')||1200;
+
 if (!(DIVLINES==='black' || DIVLINES==='white')){
     DIVLINES='none'
 }
@@ -15,14 +17,17 @@ R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S
 A=window.requestAnimationFrame;
 FILE_NAME = `FLAKES_V19_${SEED}_D${DEPTH}_`;
 
-C.width=W=1200;
-C.height=H=1800;
+C.width=W=parseInt(WIDTH);
+C.height=H=(W/2*3)|0;
 WW=window.innerWidth;
 WH=window.innerHeight;
 SCALE = (WW/WH>2/3)?WH/H:WW/W;  // the scale will depend on the longest or shortest side, depending how it fits the current window
 C.style.width=`${W*SCALE}px`;
 C.style.height=`${H*SCALE}px`;
 
+
+// TODO:  change pixel size for texture, and linewidth  for overlaying subdivision, they are not the same whe scaling up
+// TODO: test pixelratio,  dev controls, try iphone etc
 
 PALETTES = [
     [[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]],
@@ -341,7 +346,7 @@ class Flake {
 
         // start a random walk to fill the triangle
         X.globalAlpha=gA;
-        for (let i=0; i<9999; i++){
+        for (let i=0; i<8000; i++){
 //            this.determineNext(0.002, 6);  // sets this.previous
 //            this.determineNext(0.008, 6);  // sets this.previous
             this.determineNext(0.07, 9);  // sets this.previous
