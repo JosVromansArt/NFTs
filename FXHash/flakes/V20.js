@@ -6,6 +6,13 @@
 // do something with gradients, the sharpest angle is opposite of the smallest sidelength
 // define different colors palettes from the start triagnles, so the sharp division can transpose into the coloring/appearance
 
+// use triangle subdivision pattern, also with drawing x% of the lines for a wild variation, and use those lines as a texture engraved in the triangles
+// when choosing a random point inside triangle to create 3 faces: use that point symmetrically for those 3 triangles, this point is for example the top point,
+// and could have color gradation brighter towards this vertex, so the opposite side might be darker.
+// In case of using those triangle subdivision patterns, they can point all three to that vertex, to achieve nice symmetry
+
+// todo: stop subdivision when elongation becomes too large. Experiment if that is a good stop condition. Add it to the code as a style variation in case it is good
+
 const urlParams = new URLSearchParams(window.location.search);
 DEPTH = urlParams.get('depth')||3;
 TEXTURE = urlParams.get('texture')==='off'?false:true;
