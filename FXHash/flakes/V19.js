@@ -26,9 +26,6 @@ C.style.width=`${W*SCALE}px`;
 C.style.height=`${H*SCALE}px`;
 
 
-// TODO:  change pixel size for texture, and linewidth  for overlaying subdivision, they are not the same whe scaling up
-// TODO: test pixelratio,  dev controls, try iphone etc
-
 PALETTES = [
     [[200, 99, 39],[43, 81, 48],[155, 96, 11],[148, 100, 23],[32, 15, 80],[357, 94, 30],[183, 100, 26],[183, 100, 16],[192, 64, 47],[243, 78, 17],[217, 92, 44],[225, 89, 35],[173, 16, 70]],
 	[[228, 13, 8],[160, 6, 81],[228, 4, 24],[208, 8, 52],[217, 15, 37],[58, 81, 88],[217, 23, 65],[40, 51, 16],[62, 16, 63],[51, 23, 45],[50, 57, 73],[48, 82, 36],[213, 82, 64],[240, 74, 73]],
@@ -187,6 +184,10 @@ function draw_line(a, b, color, width){
 //    draw_line(c,a,color,.2)
 //}
 
+// lighting (hsl) value is added on Flake creation, these values are used when drawing the flake with fill triangle.
+FLAKE_L1 = 42
+FLAKE_L2 = 60
+FLAKE_L3 = 85
 
 S2 = 90;  // satyuration values for the random walk on the texture
 S3 = 10;
@@ -201,6 +202,27 @@ if (TEXTURE_TYPE===2){  // 60 80 40 for the new texture
     DN2 = 16;
 }
 
+
+getDistance=(a,b)=>{
+    diffX = b[0]-a[0];
+    diffY = b[1]-a[1];
+    return Math.sqrt(diffX **2 + diffY ** 2)  // todo: remove sqrt and handle that when comparing these values
+}
+
+getElongation=(a,b,c)=>{
+    /*
+      for a triangle a,b,c, take the midpoint of ab, and measure the distance to c.
+      compare that length ( = the height of triangle using base ab), to the length of ab.
+      return elongation as highest_value / smallest_value,  so the elongation become a value of > 1
+    */
+    let lengthAB_to_C = getDistance(getMidpoint(a,b), c);
+    let lengthA_to_B = getDistance(a,b);
+
+    let smallest = Math.min(lengthA_to_B, lengthAB_to_C);
+    let largest = Math.max(lengthA_to_B, lengthAB_to_C);
+
+    return largest / smallest
+}
 
 class Flake {
     // A Flake is one 3th of a parent triangle. So it has 2 siblings with a similar hue but different lighting
@@ -238,15 +260,13 @@ class Flake {
         }
         this.counter=0;  // keep track of frame in the case of texturing
     }
-
     getElongation() {
-        let distances = [  // calculate distances squared. return root of elongation
-            [this.a, this.b],
-            [this.b, this.c],
-            [this.c, this.a]
-        ].map(pts=>(pts[1][0] - pts[0][0])**2 + (pts[1][1] - pts[0][1]) ** 2);
+        // todo: could be improved by directly chosing the shortest edge, and use that as a & b in below method (?)
+        let elo1 = getElongation(this.a, this.b, this.c);
+        let elo2 = getElongation(this.b, this.c, this.a);
+        let elo3 = getElongation(this.a, this.c, this.b);
 
-        return Math.sqrt(Math.max(...distances) / Math.min(...distances));
+        return Math.max(elo1,elo2,elo3);
     }
 
     getPointOnBbox(){
@@ -316,9 +336,9 @@ class Flake {
         X.globalCompositeOperation='multiply';
 //        X.globalCompositeOperation='source-over';
 //        this.draw();
-        X.globalAlpha=1;
+//        X.globalAlpha=1;
 
-        if (this.area>9999){
+        if (this.area>999){
             this.fillFrameSLOW();
         }
 
@@ -367,7 +387,15 @@ class Flake {
     }
 
     draw(){  // fill the triangle
-        X.fillStyle = hslToStr(this.hue,this.s,this.l);
+
+        if (this.getElongation()>19){  // draw super long triangles in white
+            X.fillStyle = 'white';
+            X.globalAlpha = 1;
+        } else {
+            X.globalAlpha = 1;
+            X.fillStyle = hslToStr(this.hue,this.s,this.l);
+        }
+
         X.beginPath();
         X.moveTo(...this.a);
 
@@ -388,15 +416,16 @@ TINY_FLAKES = [];
 subdivide=(a,b,c,depth=0)=>{
     let inside = random_in_triangle(a,b,c)
 
-    if (depth>DEPTH || (depth>1&&R()<.2)){
+    if (depth>DEPTH || (depth>1&&R()>1.2)){  // TODO test this and document what the effect is, it was <.2
         let trig = [a,b,c,inside];
         trig.color=PALETTE[R()*PALETTE.length|0];
-        [[0,1,42],[2,1,60],[0,2,85]].map(v=>{
+        [[0,1,FLAKE_L1],[2,1,FLAKE_L2],[0,2,FLAKE_L3]].map(v=>{  //
             let flake = new Flake(trig[v[0]],trig[v[1]],trig[3],trig.color[0],trig.color[1],v[2]);
 //            if (flake.getElongation()>3){
- //||flake.getElongation()>5){
-            if (flake.area<300){
+ //||flake.getElongation()>5){  // TODO: stop subdividing when triangle has a certain long elongation?
+            if (flake.area<9){  // this was 300 before
                 TINY_FLAKES.push(flake);
+                return  // we did not return here before, we could keep dividing tiny flakes
             } else {
                 FLAKES.push(flake);
             }
