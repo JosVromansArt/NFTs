@@ -12,6 +12,8 @@
 // In case of using those triangle subdivision patterns, they can point all three to that vertex, to achieve nice symmetry
 
 // todo: stop subdivision when elongation becomes too large. Experiment if that is a good stop condition. Add it to the code as a style variation in case it is good
+// enlarge triangles (possibly tilt).  But only when the elongation is larger than some value. This will make the super long and tiny triangles being overriden, so could get rid of the very prominent cutting line
+
 
 const urlParams = new URLSearchParams(window.location.search);
 DEPTH = urlParams.get('depth')||3;
@@ -239,6 +241,30 @@ getElongation=(a,b,c)=>{
     return largest / smallest
 }
 
+elongTwo=(a,b,c)=>{
+    // lengths of all triangle edges
+    let lab = getDistance(a,b);
+    let lbc = getDistance(b,c);
+    let lca = getDistance(c,a);
+    let lengths = [lab, lbc, lca];
+
+    let shortestIndex = 0; // refers to the edge index in this.length,  0: AB, 1: BC, 2: CA
+    for (let i=1; i<3; i++){
+        if (lengths[i] < lengths[shortestIndex]) {
+            shortestIndex = i
+        }
+    }
+
+    if (shortestIndex === 0 ){
+        return getElongation(a, b, c)
+    } else if (shortestIndex === 1 ) {
+        return getElongation(b,c,a)
+    }
+    return getElongation(c,a,b)
+}
+
+
+
 class Flake {
     // A Flake is one 3th of a parent triangle. So it has 2 siblings with a similar hue but different lighting
     constructor(a,b,c, hue,s,l){
@@ -247,9 +273,23 @@ class Flake {
         this.c=c;
         let triBound = [...a,...b,...c];
 
+        // lengths of all triangle edges
+//        this.lab = getDistance(a,b);
+//        this.lbc = getDistance(b,c);
+//        this.lca = getDistance(c,a);
+//        this.lengths = [this.lab, this.lbc, this.lca];
+//
+//        this.shortestIndex = 0; // refers to the edge index in this.length,  0: AB, 1: BC, 2: CA
+//        for (let i=1; i<3; i++){
+//            if (this.lengths[i] < this.lengths[this.shortestIndex]) {
+//                this.shortestIndex = i
+//            }
+//        }
+
         this.hue=hue;
         this.s=s;
         this.l=l;
+        this.color = hslToStr(hue, s, l);
         this.palette = [
             hslToStr(hue, 60, l),
             hslToStr(hue, S2, l),
@@ -282,6 +322,14 @@ class Flake {
         let elo3 = getElongation(this.a, this.c, this.b);
 
         return Math.max(elo1,elo2,elo3);
+    }
+    getElongation2() {  // based on the shortest edge
+        if (this.shortestIndex === 0 ){
+            return getElongation(this.a, this.b, this.c)
+        } else if (this.shortestIndex === 1 ) {
+            return getElongation(this.b, this.c, this.a)
+        }
+        return getElongation(this.c, this.a, this.b)
     }
 
     getPointOnBbox(){
@@ -357,18 +405,13 @@ class Flake {
             this.fillFrameSLOW();
         }
 
-        // add subdivision lines on individual flakes, only when black or white has been specified
-        if (DIVLINES==='black'){
-            X.globalAlpha=.5;
-            X.globalCompositeOperation='multiply';
-            X.lineWidth=1;
-            draw_y(this.a,this.b,this.c, 0,'#222', 3)
-        } else if (DIVLINES==='white'){
-            X.globalAlpha=.2;
-            X.globalCompositeOperation='source-over';
-            X.lineWidth=3;
-            draw_y(this.a,this.b,this.c, 0,'#fff', 3)
-        }
+        X.globalAlpha=.5;
+//        X.globalCompositeOperation=['multiply', 'source-over'][R()*2|0];
+        X.globalCompositeOperation='source-over';
+        // this.palette[1]
+        let color = ['#000', '#000', this.color][R()*3|0]
+        draw_y(this.a,this.b,this.c, 0, color, 2, this.area/100000) //)
+//    draw_y=(a,b,c, iter=0,color='#000', max_iter=2, line_width=1)
     }
 
     fillFrameSLOW(){  // original texture, really slow rendering
@@ -431,9 +474,15 @@ TINY_FLAKES = [];
 subdivide=(a,b,c,depth=0)=>{
     let inside = random_in_triangle(a,b,c)
 
-    if (depth>DEPTH || (depth>1&&R()>1.2)){  // TODO test this and document what the effect is, it was <.2
+    if (depth>DEPTH || (depth>1&&R()<.1)){  // TODO test this and document what the effect is, it was <.2  & > 1.2
         let trig = [a,b,c,inside];
         trig.color=PALETTE[R()*PALETTE.length|0];
+
+        if (elongTwo(a,b,c)  > 5){
+            let flake = new Flake(a,b,c,trig.color[0],trig.color[1],90)
+            FLAKES.push(flake);
+            return
+        }
         [[0,1,FLAKE_L1],[2,1,FLAKE_L2],[0,2,FLAKE_L3]].map(v=>{  //
             let flake = new Flake(trig[v[0]],trig[v[1]],trig[3],trig.color[0],trig.color[1],v[2]);
 //            if (flake.getElongation()>3){
