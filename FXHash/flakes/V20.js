@@ -29,30 +29,19 @@ R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S
 A=window.requestAnimationFrame;
 FILE_NAME = `FLAKES_V19_${SEED}_D${DEPTH}_`;
 
-
-//W=window;
-//w=W.innerWidth;
-//h=W.innerHeight;
-//ratio = [2,3];
-//if (w >= h*ratio[0]/ratio[1]){w = h*ratio[0]/ratio[1];} else {h = w/ratio[0]*ratio[1];}
-//pR=W.devicePixelRatio;
-//C.width=~~(w*pR);
-//C.height=~~(h*pR);
-//C.style.width=`${w}px`;
-//C.style.height=`${h}px`;
-//X=C.getContext('2d');
-//X.scale(pR,pR);
-
-
-window.devicePixelRatio=3;
-
-C.width=W=1200;
-C.height=H=1800;
 WW=window.innerWidth;
 WH=window.innerHeight;
+C.width=W=1200;
+C.height=H=1800;
 SCALE = (WW/WH>2/3)?WH/H:WW/W;  // the scale will depend on the longest or shortest side, depending how it fits the current window
 C.style.width=`${W*SCALE}px`;
 C.style.height=`${H*SCALE}px`;
+
+//pR=devicePixelRatio;
+X=C.getContext('2d');
+//X.scale(pR,pR);
+X.fillStyle='#000';
+X.fillRect(0,0,W,H);
 
 
 PALETTES = [
@@ -80,12 +69,6 @@ PALETTE = PALETTES[PALETTE_INDEX];
 //    [289, 15, 57],
 ////    [210, 56, 6],
 //    [251, 23, 51],[34, 53, 83],[254, 22, 56],[6, 21, 35],[250, 6, 20],[240, 18, 12],[225, 19, 45],[224, 25, 21],[226, 35, 14],[345, 19, 25],[228, 20, 34],[224, 11, 26],[215, 48, 16],[224, 17, 29],[252, 12, 8],[348, 23, 30],[10, 14, 17],[2, 14, 63],[293, 14, 53],[236, 13, 40],[246, 12, 49],[220, 18, 53],[286, 18, 38],[346, 12, 21],[350, 15, 39],[357, 17, 50],[4, 10, 28],[238, 18, 67],[209, 72, 8],[347, 16, 45],[221, 28, 43],[206, 4, 38],[234, 23, 64],[280, 12, 28],[40, 49, 67]]
-
-
-X=C.getContext('2d');
-X.fillStyle='#000';
-X.fillRect(0,0,W,H);
-
 
 hslToStr=(h,s,l,a=1)=>'hsl(' + h + ',' + s + '%,' + l + '%,' + a + ')';
 getMidpoint=(a,b)=>[(a[0] + b[0])/2,(a[1] + b[1])/2];
