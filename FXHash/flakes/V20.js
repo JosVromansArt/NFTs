@@ -21,12 +21,7 @@ TEXTURE = urlParams.get('texture')==='off'?false:true;
 SEED = urlParams.get('seed')||Math.random()*99999999999|0;
 COMPOSITION_TYPE = urlParams.get('composition');
 TEXTURE_TYPE = urlParams.get('texture_type')|1+Math.random()*2|0;
-DIVLINES = urlParams.get('divlines');
-WIDTH = urlParams.get('width')||1200;
 
-if (!(DIVLINES==='black' || DIVLINES==='white')){
-    DIVLINES='none'
-}
 
 S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
@@ -34,8 +29,25 @@ R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S
 A=window.requestAnimationFrame;
 FILE_NAME = `FLAKES_V19_${SEED}_D${DEPTH}_`;
 
-C.width=W=parseInt(WIDTH);
-C.height=H=(W/2*3)|0;
+
+//W=window;
+//w=W.innerWidth;
+//h=W.innerHeight;
+//ratio = [2,3];
+//if (w >= h*ratio[0]/ratio[1]){w = h*ratio[0]/ratio[1];} else {h = w/ratio[0]*ratio[1];}
+//pR=W.devicePixelRatio;
+//C.width=~~(w*pR);
+//C.height=~~(h*pR);
+//C.style.width=`${w}px`;
+//C.style.height=`${h}px`;
+//X=C.getContext('2d');
+//X.scale(pR,pR);
+
+
+window.devicePixelRatio=3;
+
+C.width=W=1200;
+C.height=H=1800;
 WW=window.innerWidth;
 WH=window.innerHeight;
 SCALE = (WW/WH>2/3)?WH/H:WW/W;  // the scale will depend on the longest or shortest side, depending how it fits the current window
@@ -511,7 +523,6 @@ console.table({
     'Seed': SEED,
     'Composition': COMPOSITION_TYPE,
     'Depth': DEPTH,
-    'Detail Division Lines': DIVLINES,
     'Flake Count': FLAKE_COUNT,
     'Tiny Flake Count': TINY_FLAKE_COUNT,
     'Palette Index': PALETTE_INDEX,
