@@ -17,15 +17,17 @@
 
 const urlParams = new URLSearchParams(window.location.search);
 DEPTH = urlParams.get('depth')||3;
-TEXTURE = urlParams.get('texture')==='off'?false:true;
+TEXTURE = urlParams.get('texture')==='on';
 SEED = urlParams.get('seed')||Math.random()*99999999999|0;
-COMPOSITION_TYPE = urlParams.get('composition');
-TEXTURE_TYPE = urlParams.get('texture_type')|1+Math.random()*2|0;
-
-
 S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
 [...SEED+'ThxPiter'].map(c=>R(S[0]^=c.charCodeAt()*S[3]));
+
+COMPOSITION_TYPE = urlParams.get('composition');
+TEXTURE_TYPE = urlParams.get('texture_type')|1+R()*2|0;
+
+
+
 A=window.requestAnimationFrame;
 FILE_NAME = `FLAKES_V19_${SEED}_D${DEPTH}_`;
 
@@ -176,9 +178,9 @@ draw_y=(a,b,c, iter=0,color='#000', max_iter=2, line_width=1)=>{
     draw_line(c, inside, color, line_width)
 
     if (iter<max_iter){
-        draw_y(a,b,inside,iter+1, color, max_iter);
-        draw_y(b,c,inside,iter+1, color, max_iter);
-        draw_y(c,a,inside,iter+1, color, max_iter);
+        draw_y(a,b,inside,iter+1, color, max_iter, line_width);
+        draw_y(b,c,inside,iter+1, color, max_iter, line_width);
+        draw_y(c,a,inside,iter+1, color, max_iter, line_width);
     }
 }
 
@@ -521,34 +523,15 @@ if (TEXTURE){
 
         if (triangleIndex<TINY_FLAKE_COUNT){
             // handle a batch of tiny flakes
-            for (let ii=0;ii<batchSize;ii++){
-                if (ii+triangleIndex>TINY_FLAKE_COUNT-1){break}
-
-                let f = TINY_FLAKES[triangleIndex+ii];
-
-                X.globalCompositeOperation='source-over';
-//                X.globalAlpha=.9;
-//                f.l=50;
-//                f.s=99;
+            // currently dont draw any small flakes
+//            for (let ii=0;ii<batchSize;ii++){
+//                if (ii+triangleIndex>TINY_FLAKE_COUNT-1){break}
 //
-//
-//                let index = ((f.a[1]/H)*PALETTE.length)|0
-//
-//                if (index>=PALETTE.length){
-//                    index = PALETTE.length*R()|0
-//                }
-//
-//                f.hue = PALETTE[index][0];
-////                f.h=90;
-//                f.draw();
-
-                X.globalAlpha=.01;
-                X.globalCompositeOperation='lighter';
-                X.lineWidth=1;
-
-                draw_y(f.a,f.b,f.c, 0,'#fff', 2)
-
-            }
+//                let f = TINY_FLAKES[triangleIndex+ii];
+//                X.globalAlpha=.01;
+//                X.globalCompositeOperation='lighter';
+//                draw_y(f.a,f.b,f.c, 0,'#fff', 2)
+//            }
 
             triangleIndex += batchSize;
             triangleIndex = Math.min(TINY_FLAKE_COUNT,triangleIndex);
