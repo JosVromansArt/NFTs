@@ -61,6 +61,18 @@ PALETTE_INDEX = urlParams.get('palette')||R()*PALETTES.length|0;
 PALETTE = PALETTES[PALETTE_INDEX];
 DEPTH_TRESHOLD = [0.1,0.2][R()*2|0];
 
+
+function get_random_strategy(){
+    let strategy = '0';
+    for (let i=0;i<2+Math.random()*15;i++){
+        let random_index = Math.random()*3|0;
+        strategy += random_index.toString();
+    }
+    return strategy;
+}
+//STRATEGIES = PALETTE.map(p=>get_random_strategy());
+PALETTE.forEach(c=>c.strategy = get_random_strategy());
+
 //PALETTE_Screenshot_from_2023_05_16_21_42_03=['#ffffff','#9e9e9e','#67b7ee','#77c1f4','#67ceee','#cbcbcb','#6767ee','#7e67ee','#8ac3f9','#9e8af9','#6046de','#55abe6','#7777f4','#778cf4','#77cdf4','#679fee','#8d77f4','#6e54e6','#3b85ba','#6788ee','#77acf4','#47b9de','#8b8af9','#5339d5','#489fde','#ba8af9','#4786de','#67abee','#3a94d5','#54c3e6','#5593e6','#cd8af9','#c267ee','#397ad5','#a067ee','#4c3ba0','#503aba','#8ad6f9','#8a9ef9','#7a47de']
 
 //PALETTE=[
@@ -168,19 +180,7 @@ function random_in_triangle(a,b,c){
 }
 
 
-
-function get_random_strategy(){
-    let strategy = '0';
-    for (let i=0;i<2+Math.random()*15;i++){
-        let random_index = Math.random()*3|0;
-        strategy += random_index.toString();
-    }
-    return strategy;
-}
-
-strategy = get_random_strategy();
-
-function triSubdivide(vertices, i, line_width){
+function triSubdivide(vertices, i, line_width, strategy){
     var strategy_length = strategy.length;
     if (i < 13) {
         var subdivide_index = strategy[i % strategy_length];
@@ -195,8 +195,8 @@ function triSubdivide(vertices, i, line_width){
             draw_line(midpoint, subdivide_vertex, '#000', line_width)
         }
 
-        triSubdivide([subdivide_vertex, midpoint, vertices[0]], i + 1, line_width);
-        triSubdivide([subdivide_vertex, midpoint, vertices[1]], i + 1, line_width);
+        triSubdivide([subdivide_vertex, midpoint, vertices[0]], i + 1, line_width, strategy);
+        triSubdivide([subdivide_vertex, midpoint, vertices[1]], i + 1, line_width, strategy);
     }
 }
 
@@ -281,7 +281,7 @@ elongTwo=(a,b,c)=>{
 
 class Flake {
     // A Flake is one 3th of a parent triangle. So it has 2 siblings with a similar hue but different lighting
-    constructor(a,b,c, hue,s,l){
+    constructor(a,b,c, hue,s,l, strategy){
         this.a=a;
         this.b=b;
         this.c=c;
@@ -300,6 +300,11 @@ class Flake {
 //            }
 //        }
 
+        this.strategy = strategy;
+//        if (this.strategy === undefined){
+//            alert('fuck')
+//            this.strategy = '01222110'
+//        }
         this.hue=hue;
         this.s=s;
         this.l=l;
@@ -419,14 +424,14 @@ class Flake {
             this.fillFrameSLOW();
         }
 
-        X.globalAlpha=.5;
+//        X.globalAlpha=.5;
 //        X.globalCompositeOperation=['multiply', 'source-over'][R()*2|0];
-        X.globalCompositeOperation='source-over';
+//        X.globalCompositeOperation='source-over';
 
         // recursively draw division lines
         X.globalAlpha=.4;
         X.globalCompositeOperation = 'multiply';
-        triSubdivide([this.a,this.b,this.c], 0, this.area/100000)
+        triSubdivide([this.a,this.b,this.c], 0, this.area/100000, this.strategy)
 
     }
 
@@ -485,7 +490,8 @@ class Flake {
 // variation1:  base color on horizontal distance from center line, just calculate x vs W/2. So the center vertical can become a prominent color
 // variation2: for grid with 3 or 4 columns, every colomn gets different color palette, that nicely complements, or adds up to eachother. This could also be a gradient from top to bottom. So the composition will be pillars/columns
 _varia=value=>value -5+ R()*10|0;
-variation=color=>[_varia(color[0]),_varia(color[1]),_varia(color[2])]
+//variation=color=>[_varia(color[0]),_varia(color[1]),_varia(color[2])]
+variation=color=>color;  // TODO: skip the variation?
 
 
 START_TRIANGLES = getStartTriangles();
@@ -503,12 +509,12 @@ subdivide=(a,b,c,depth, color)=>{
         trig.color=color; //PALETTE[R()*PALETTE.length|0];
 
         if (elongTwo(a,b,c)  > 5){
-            let flake = new Flake(a,b,c,trig.color[0],trig.color[1],90)
+            let flake = new Flake(a,b,c,trig.color[0],trig.color[1],90, color.strategy)
             FLAKES.push(flake);
             return
         }
         [[0,1,FLAKE_L1],[2,1,FLAKE_L2],[0,2,FLAKE_L3]].map(v=>{  //
-            let flake = new Flake(trig[v[0]],trig[v[1]],trig[3],trig.color[0],trig.color[1],v[2]);
+            let flake = new Flake(trig[3],trig[v[0]],trig[v[1]],trig.color[0],trig.color[1],v[2], color.strategy);
 //            if (flake.getElongation()>3){
  //||flake.getElongation()>5){  // TODO: stop subdividing when triangle has a certain long elongation?
             if (flake.area<9){  // this was 300 before
