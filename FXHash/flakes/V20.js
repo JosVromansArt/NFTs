@@ -17,7 +17,9 @@
 
 const urlParams = new URLSearchParams(window.location.search);
 DEPTH = urlParams.get('depth')||3;
-TEXTURE = urlParams.get('texture')==='on';
+TEXTURE = urlParams.get('texture');
+TEXTURE = (TEXTURE==='on'||TEXTURE===null)
+
 SEED = urlParams.get('seed')||Math.random()*99999999999|0;
 S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
