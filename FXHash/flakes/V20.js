@@ -25,8 +25,7 @@ R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S
 
 COMPOSITION_TYPE = urlParams.get('composition');
 TEXTURE_TYPE = urlParams.get('texture_type')|1+R()*2|0;
-
-
+COLOR_DEPTH = [4,4,4,4,4,5,3,2,1,0][R()*10|0];
 
 A=window.requestAnimationFrame;
 FILE_NAME = `FLAKES_V19_${SEED}_D${DEPTH}_`;
@@ -86,7 +85,7 @@ PAUSED=false;
 
 determineCompositionType=(rv=R())=>rv<.2?'Z':(rv<.4?'A':(rv<.6?'B':(rv<.8?'C':'G')));
 if (COMPOSITION_TYPE===null){COMPOSITION_TYPE = determineCompositionType()}
-
+//COMPOSITION_TYPE = 'G';
 
 getDistortedGrid=()=>{
     let rows = 2+R()*4|0;
@@ -474,7 +473,7 @@ START_TRIANGLES = getStartTriangles();
 FLAKES = [];
 TINY_FLAKES = [];
 subdivide=(a,b,c,depth, color)=>{
-    if (depth<4){  // Color palettes are defined at random for the first iterations, and afther the 4th, the color from parent will be inherited
+    if (depth<COLOR_DEPTH){  // Color palettes are defined at random for the first iterations, and afther the 4th, the color from parent will be inherited
         color=PALETTE[R()*PALETTE.length|0]
     }
     let inside = random_in_triangle(a,b,c)
@@ -521,6 +520,7 @@ console.table({
     'Palette Index': PALETTE_INDEX,
     'Texture type': TEXTURE_TYPE,
     'Depth Threshold': DEPTH_TRESHOLD,
+    'Color Depth': COLOR_DEPTH,
 })
 
 if (TEXTURE){
