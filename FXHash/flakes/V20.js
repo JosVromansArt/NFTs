@@ -21,7 +21,7 @@ TEXTURE = urlParams.get('texture')==='on';
 SEED = urlParams.get('seed')||Math.random()*99999999999|0;
 S=Uint32Array.of(9,7,5,3);
 R=(a=1)=>a*(a=S[3],S[3]=S[2],S[2]=S[1],a^=a<<11,S[0]^=a^a>>>8^(S[1]=S[0])>>>19,S[0]/2**32);
-[...SEED+'ThxPiter'].map(c=>R(S[0]^=c.charCodeAt()*S[3]));
+[...SEED+'TxPiter'].map(c=>R(S[0]^=c.charCodeAt()*S[3]));
 
 COMPOSITION_TYPE = urlParams.get('composition');
 TEXTURE_TYPE = urlParams.get('texture_type')|1+R()*2|0;
@@ -60,7 +60,7 @@ PALETTES = [
 PALETTE_INDEX = urlParams.get('palette')||R()*PALETTES.length|0;
 //PALETTE_INDEX = R()*PALETTES.length|0;
 PALETTE = PALETTES[PALETTE_INDEX];
-
+DEPTH_TRESHOLD = [0.1,0.2][R()*2|0];
 
 //PALETTE_Screenshot_from_2023_05_16_21_42_03=['#ffffff','#9e9e9e','#67b7ee','#77c1f4','#67ceee','#cbcbcb','#6767ee','#7e67ee','#8ac3f9','#9e8af9','#6046de','#55abe6','#7777f4','#778cf4','#77cdf4','#679fee','#8d77f4','#6e54e6','#3b85ba','#6788ee','#77acf4','#47b9de','#8b8af9','#5339d5','#489fde','#ba8af9','#4786de','#67abee','#3a94d5','#54c3e6','#5593e6','#cd8af9','#c267ee','#397ad5','#a067ee','#4c3ba0','#503aba','#8ad6f9','#8a9ef9','#7a47de']
 
@@ -462,18 +462,26 @@ class Flake {
     }
 }
 
+// todo: for grid layout
+// variation1:  base color on horizontal distance from center line, just calculate x vs W/2. So the center vertical can become a prominent color
+// variation2: for grid with 3 or 4 columns, every colomn gets different color palette, that nicely complements, or adds up to eachother. This could also be a gradient from top to bottom. So the composition will be pillars/columns
+_varia=value=>value -5+ R()*10|0;
+variation=color=>[_varia(color[0]),_varia(color[1]),_varia(color[2])]
 
 
 START_TRIANGLES = getStartTriangles();
 
 FLAKES = [];
 TINY_FLAKES = [];
-subdivide=(a,b,c,depth=0)=>{
+subdivide=(a,b,c,depth, color)=>{
+    if (depth<4){  // Color palettes are defined at random for the first iterations, and afther the 4th, the color from parent will be inherited
+        color=PALETTE[R()*PALETTE.length|0]
+    }
     let inside = random_in_triangle(a,b,c)
 
-    if (depth>DEPTH || (depth>1&&R()<.1)){  // TODO test this and document what the effect is, it was <.2  & > 1.2
+    if (depth>DEPTH || (depth>1&&R()<DEPTH_TRESHOLD)){  // TODO test this and document what the effect is, it was > 1.2 at some point
         let trig = [a,b,c,inside];
-        trig.color=PALETTE[R()*PALETTE.length|0];
+        trig.color=color; //PALETTE[R()*PALETTE.length|0];
 
         if (elongTwo(a,b,c)  > 5){
             let flake = new Flake(a,b,c,trig.color[0],trig.color[1],90)
@@ -493,11 +501,11 @@ subdivide=(a,b,c,depth=0)=>{
         })
         return
     }
-    subdivide(inside, a,b, depth+1)
-    subdivide(inside, b,c, depth+1)
-    subdivide(inside, c,a, depth+1)
+    subdivide(inside, a,b, depth+1, variation(color))
+    subdivide(inside, b,c, depth+1, variation(color))
+    subdivide(inside, c,a, depth+1, variation(color))
 }
-START_TRIANGLES.forEach(t=>subdivide(t[0], t[1], t[2]))
+START_TRIANGLES.forEach(t=>subdivide(t[0], t[1], t[2],0,PALETTE[R()*PALETTE.length|0]))
 FLAKE_COUNT = FLAKES.length;
 TINY_FLAKE_COUNT = TINY_FLAKES.length;
 
@@ -512,6 +520,7 @@ console.table({
     'Tiny Flake Count': TINY_FLAKE_COUNT,
     'Palette Index': PALETTE_INDEX,
     'Texture type': TEXTURE_TYPE,
+    'Depth Threshold': DEPTH_TRESHOLD,
 })
 
 if (TEXTURE){
