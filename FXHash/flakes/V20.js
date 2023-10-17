@@ -168,20 +168,38 @@ function random_in_triangle(a,b,c){
 }
 
 
-// recursively draw division lines
-draw_y=(a,b,c, iter=0,color='#000', max_iter=2, line_width=1)=>{
-    let inside = random_in_triangle(a,b,c);
 
-    draw_line(a, inside, color, line_width)
-    draw_line(b, inside, color, line_width)
-    draw_line(c, inside, color, line_width)
+function get_random_strategy(){
+    let strategy = '0';
+    for (let i=0;i<2+Math.random()*15;i++){
+        let random_index = Math.random()*3|0;
+        strategy += random_index.toString();
+    }
+    return strategy;
+}
 
-    if (iter<max_iter){
-        draw_y(a,b,inside,iter+1, color, max_iter, line_width);
-        draw_y(b,c,inside,iter+1, color, max_iter, line_width);
-        draw_y(c,a,inside,iter+1, color, max_iter, line_width);
+strategy = get_random_strategy();
+
+function triSubdivide(vertices, i, line_width){
+    var strategy_length = strategy.length;
+    if (i < 13) {
+        var subdivide_index = strategy[i % strategy_length];
+        var subdivide_vertex = vertices.splice(subdivide_index, 1)[0];
+        var midpoint = [
+            (vertices[0][0] + vertices[1][0])/2,
+            (vertices[0][1] + vertices[1][1])/2,
+        ]
+
+
+        if (R()<.19){
+            draw_line(midpoint, subdivide_vertex, '#000', line_width)
+        }
+
+        triSubdivide([subdivide_vertex, midpoint, vertices[0]], i + 1, line_width);
+        triSubdivide([subdivide_vertex, midpoint, vertices[1]], i + 1, line_width);
     }
 }
+
 
 function draw_line(a, b, color, width){
     X.lineWidth = width;
@@ -404,10 +422,12 @@ class Flake {
         X.globalAlpha=.5;
 //        X.globalCompositeOperation=['multiply', 'source-over'][R()*2|0];
         X.globalCompositeOperation='source-over';
-        // this.palette[1]
-        let color = ['#000', '#000', this.color][R()*3|0]
-        draw_y(this.a,this.b,this.c, 0, color, 2, this.area/100000) //)
-//    draw_y=(a,b,c, iter=0,color='#000', max_iter=2, line_width=1)
+
+        // recursively draw division lines
+        X.globalAlpha=.4;
+        X.globalCompositeOperation = 'multiply';
+        triSubdivide([this.a,this.b,this.c], 0, this.area/100000)
+
     }
 
     fillFrameSLOW(){  // original texture, really slow rendering
@@ -510,6 +530,11 @@ TINY_FLAKE_COUNT = TINY_FLAKES.length;
 
 FRAME_COUNTER = 0;
 MAX_FRAMES = 340;
+
+// TODO: Define vertex, and all triangles with that vertex should get a certain color
+// TODO: try triangle subdivision pattern, just on 1 or 2 of the largest triangles
+// TODO: sort colors, based on positiion triangle, assign color
+
 
 console.table({
     'Seed': SEED,
