@@ -352,7 +352,7 @@
   function createFxhashSdk(window2, options) {
     const { parent } = window2;
     const search = new URLSearchParams(window2.location.search);
-    const fxhash = search.get("fxhash") || "oo" + getRandomHash(49);
+    const fxhash = 'oo2u6Pd7mvbYL2KrGcUjWYU5QMwvGqvPgfuo7AwWwcHWbQUcxrr'; //search.get("fxhash") || "oo" + getRandomHash(49);
     let fxrand = createFxRandom(fxhash, 2);
     const fxminter = search.get("fxminter") || "tz1" + getRandomHash(33);
     let fxrandminter = createFxRandom(fxminter, 3);
