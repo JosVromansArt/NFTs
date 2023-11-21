@@ -52,137 +52,8 @@ function hsl_to_str(h,s,l,a=1){return 'hsl(' + h + ',' + s + '%,' + l + '%,' + a
 
 
 VERTEX_COUNT = 4+ R()*20|0;
-
-function get_ngon_points(n, radius, xoff, yoff, rot){
-    let phi = 2 * 3.14159265 / n;
-    let points = [];
-    for (let j=0; j<n; j++){
-        points.push([Math.sin(phi * j + rot * 2) * radius + xoff, Math.cos(phi * j + rot) * radius + yoff]);
-    }
-    return points;
-}
-
 get_midpoint=(a,b)=>[(a[0] + b[0])/2,(a[1] + b[1])/2];
-
-class Triangle {
-    constructor(p1,p2,p3){
-        this.p1=p1;
-        this.p2=p2;
-        this.p3=p3;
-    }
-
-//    shrink(shrink_perc=.07){
-//        let m12 = get_midpoint(this.p1, this.p2);
-//        let m23 = get_midpoint(this.p2, this.p3);
-//        let m13 = get_midpoint(this.p1, this.p3);
-//
-//        let towards_m12 = get_point_on_line(this.p3, m12, shrink_perc);
-//        let towards_m23 = get_point_on_line(this.p1, m23, shrink_perc);
-//        let towards_m13 = get_point_on_line(this.p2, m13, shrink_perc);
-//
-//        this.p1 = towards_m23;
-//        this.p2 = towards_m13;
-//        this.p3 = towards_m12;
-//    }
-//
-//    draw(){
-//        X.fillStyle = hsl_to_str(...choice(PALETTE));
-//        X.beginPath();
-//        X.moveTo(...this.p1);
-//        X.lineTo(...this.p2);
-//        X.lineTo(...this.p3);
-//        X.closePath();
-//        X.fill();
-//    }
-
-    // one triangle A,B,C is converted into a list of one or more triangles
-//    subdivide(){
-//        SUBDIV_COUNTER += 1;
-//        let [a,b,c] = [this.p1, this.p2, this.p3];
-//        let random_value = R();
-//
-//        a = randomize(a, RANDOM_OFFSET);  // TODO: make this depend on the triangle size (roughly)
-//        b = randomize(b, RANDOM_OFFSET);
-//        c = randomize(c, RANDOM_OFFSET);
-//
-//        let ab = get_midpoint(a,b);
-//
-//        if (random_value < .4){
-//            let t1 = new Triangle(a, ab, c);
-//            let t2 = new Triangle(b, ab, c);
-//            return [t1,t2]
-//        }
-//        else if (random_value < .75){
-//            let cab = get_midpoint(ab,c);
-//
-//            let tr1 = new Triangle(a, ab, cab)
-//            let tr2 = new Triangle(b,  ab, cab)
-//            let tr3 = new Triangle(a, c, cab)
-//            let tr4 = new Triangle(b,  c, cab)
-//            return [tr1, tr2, tr3, tr4];
-//        }
-//
-//        return [this]; // return the original triangle
-//    }
-}
-
-
-
 COMPOSITION_TYPE = 'unknown'
-function get_start_triangles(){
-    let random_value = R();
-
-    let A = [0,0];
-    let B = [w,0];
-    let C = [w,h];
-    let D = [0,h];
-
-    if (random_value < .1){
-        let BC = get_midpoint(B,C);
-        let DA = get_midpoint(D,A);
-        let BBC = get_midpoint(B, BC);
-        let DAD = get_midpoint(DA, D);
-
-        COMPOSITION_TYPE = 'Z'
-        return [
-            new Triangle(A, B, BBC),
-            new Triangle(BBC, A, DAD),
-            new Triangle(BBC, C, DAD),
-            new Triangle(DAD,D,C),
-        ]
-    } else if (random_value < .3){
-        COMPOSITION_TYPE = 'A'
-        return [
-            new Triangle(A, B, C),
-            new Triangle(C, A, D),
-        ]
-    } else if (random_value < .66){
-        COMPOSITION_TYPE = 'B'
-        let BC = get_midpoint(B,C);
-        let DA = get_midpoint(D,A);
-
-        return [
-            new Triangle(A, B, BC),
-            new Triangle(BC, A, DA),
-            new Triangle(DA, BC, D),
-            new Triangle(BC, D,C),
-        ]
-    }
-    let DA = get_midpoint(D,A);
-    let DAB = get_midpoint(DA, B);
-    COMPOSITION_TYPE = 'C'
-    return [
-        new Triangle(A, B, DA),
-        new Triangle(B, DAB, C),
-        new Triangle(DAB, C, DA),
-        new Triangle(DA, C, D),
-    ];
-}
-
-
-START_TRIANGLES = get_start_triangles();
-
-
 
 randomInt=(a, b)=>Math.floor(a + (b - a) * R());
 FILE_NAME = `SUBDIVIDED_FLAKES_`;
@@ -279,16 +150,14 @@ function subdivide(a,b,c,depth=0, previous_hue=180){
 }
 
 
-pA = [0,0];
-pB = [0,h];
-pC = [w,0];
-//TRIANGLE = [pA,pB,pC];
-START_TRIANGLES.forEach(t=>subdivide(t.p1, t.p2, t.p3, 0, START_HUE+=64))
+subdivide(
+    [w*.8, h*.1],
+    [w*.1, h*.3],
+    [w*.9, h*.8],
+    0, START_HUE+=64)
 
 
 WALK_COUNT = 20;
-
-
 
 fill_polygon=(vertices, fill_color)=>{
     // Use the vertex indices, and get the according vertices from SCALED_VERTICES
@@ -302,22 +171,6 @@ fill_polygon=(vertices, fill_color)=>{
     X.closePath();
     X.fill();
 }
-
-//
-//getTriangle=(p)=>{
-//    for (let i=0; i<FINAL_TRIGS.length;i++){
-//        let [ax,ay,bx,by,cx,cy,hueValue] = FINAL_TRIGS[i];
-//        if (pointInTriangle(ax,ay,bx,by,cx,cy,p[0],p[1])){
-//            return i;
-//        }
-//    }
-//    return -1;
-//}
-
-//PALETTE_INDEX = R()*PALETTES.length|0;
-//PALETTE = PALETTES[PALETTE_INDEX];
-
-
 triangleArea=(x1,y1,x2,y2,x3,y3)=>Math.abs((x1*(y2-y3)+x2*(y3-y1)+x3*(y1-y2))/2);
 
 class Walk {
@@ -333,27 +186,7 @@ class Walk {
             hsl_to_str(hue, 10, l),
         ]
 
-    //    fill_polygon([a,inside, b], hsl_to_str(hue,60,40), hue)
-    //    fill_polygon([a,inside,c], hsl_to_str(hue,60,60), hue)
-    //    fill_polygon([inside,b,c], hsl_to_str(hue,60,80), hue)
-
-
-//        let pal = [
-//            palette[R()*palette.length|0],
-//            palette[R()*palette.length|0],
-//        ];
-//        pal.push(pal[0])
-//        pal.push(pal[1])
-//        pal.push(pal[0])
-//        pal.push(pal[1])
-//        pal.push(pal[0])
-//        pal.push(pal[1])
-//
-//
-//        this.palette=pal;
-
         this.area = triangleArea(...triBound);
-//        this.color = this.palette[R()*this.palette.length|0];
 
         this.minX = Math.min(triBound[0],triBound[2], triBound[4]);
         this.maxX = Math.max(triBound[0],triBound[2], triBound[4]);
@@ -374,49 +207,7 @@ class Walk {
 
             this.previous.push(sp)
         }
-//        X.fillRect(this.center[0]-10, this.center[1]-10, 25,25)
-//        console.log(this.center, ' is the center')
-//        X.globalAlpha=.1;
-
-//        this.iteration = 0;
     }
-
-//    drawBboxCenter(){
-//        X.globalAlpha=.6;
-//        X.fillStyle='red';
-//
-//        X.fillRect(this.minX, this.minY, this.maxX- this.minX, this.maxY - this.minY);
-//        X.globalAlpha=1;
-//
-//
-//        for (let i=0; i<50; i++){
-//            X.fillRect(...this.getPointOnBbox(), 5, 5);
-//        }
-//
-//
-//        this.draw('white')
-//        X.globalAlpha=1;
-//        X.globalCompositeOperation='source-over';
-//        X.fillStyle='yellow';
-//        X.fillRect(this.center[0]-6, this.center[1]-6, 12, 12);
-//
-//        let width = this.maxX - this.minX;
-//        let height = this.maxY - this.minY;
-//
-//        let rX = R() * width + this.minX;
-//        let rY = R() * height + this.minY;
-//        X.fillStyle='red';
-//
-//        alert(this.pointInside(rX,rY))
-//
-//        X.fillRect(rX, rY, 10, 10);
-//
-//
-//
-////        X.globalAlpha=.1;
-////        this.fill();
-//
-//    }
 
     getPointOnBbox(){
             // the start point of the random walk lies on the bbox around the triangle, so it will actually start outside the triangle
@@ -439,13 +230,7 @@ class Walk {
         let A2 = triangleArea(px,py,ax,ay,cx,cy);
         let A3 = triangleArea(px,py,bx,by,cx,cy);
 
-//        console.log(this.area, ' triangle area')
-//        console.log(A1, ' A1 area')
-//        console.log(A2, ' A2 area')
-//        console.log(A3, ' A3 area')
-
         return Math.abs(this.area-(A1+A2+A3)) < 3;
-
 //        return (cx - px) * (ay - py) - (ax - px) * (cy - py) >= 0 && (ax - px) * (by - py) - (bx - px) * (ay - py) >= 0 && (bx - px) * (cy - py) - (cx - px) * (by - py) >= 0;
     }
 
@@ -482,40 +267,10 @@ class Walk {
         this.previous = newPrevious
     }
 
-
-
-
-//    fill(){
-//        // start a random walk to fill the triangle
-//
-//        X.globalAlpha=0.02;
-//        for (let i=0; i<149999; i++){
-////            this.determineNext(0.002, 6);  // sets this.previous
-//            this.determineNext(0.0006, 4);  // sets this.previous
-//
-//            for (let pIndex=0; pIndex<this.previous.length; pIndex++){
-//
-//
-//                if (this.pointInside(...this.previous[pIndex])){
-//
-//                    X.fillStyle = this.palette[3];  //PALETTE[j%PALETTE.length];
-//                    X.fillRect(...this.previous[pIndex],3,3);
-//
-//                }
-//
-//
-//            }
-//        }
-//    }
     fillFrame(){
         // start a random walk to fill the triangle
-
-//        console.log(this.previous.length)
-
         X.globalAlpha=0.04;
         for (let i=0; i<999; i++){
-//            this.determineNext(0.002, 6);  // sets this.previous
-//            this.determineNext(0.008, 6);  // sets this.previous
             this.determineNext(0.07, 9);  // sets this.previous
 
             if (R()<.1){
@@ -527,16 +282,10 @@ class Walk {
             }
 
             for (let pIndex=0; pIndex<this.previous.length; pIndex++){
-
-
                 if (this.pointInside(...this.previous[pIndex])){
-
                     X.fillStyle = this.palette[pIndex];  //PALETTE[j%PALETTE.length];
                     X.fillRect(...this.previous[pIndex],2,2);
-
                 }
-
-
             }
         }
     }
@@ -553,15 +302,8 @@ class Walk {
     }
 }
 
-
-
 FRAME_COUNTER = 0;
 MAX_FRAMES = 340;
-
-//let startPoints = [];
-//let startPoints2 = [];
-//for (let i=0;i<WALK_COUNT;i++){startPoints.push(getStartCo())}
-//for (let i=0;i<WALK_COUNT;i++){startPoints2.push(getStartCo())}
 
 // Original 1 walk per triangle
 WALKS = FINAL_TRIGS.map(trig=>new Walk([trig[0], trig[1], trig[2], trig[3], trig[4], trig[5]], PALETTE));
@@ -596,68 +338,6 @@ A(T);
 
 
 document.addEventListener('keydown',function(e){if (e.code === 'Space'){e.preventDefault();PAUSED = !PAUSED;!PAUSED&&A(T)}});
-
-
-
-//let randomIndex = R() * FINAL_TRIGS.length|0;
-//console.log('RAndom triangle ', randomIndex);
-//let randomTrig = FINAL_TRIGS[randomIndex];
-//
-//let walk = new Walk([randomTrig[0], randomTrig[1], randomTrig[2], randomTrig[3], randomTrig[4], randomTrig[5]], PALETTES[R()*PALETTES.length|0])
-//walk.fill();
-//walk.drawBboxCenter();
-
-
-
-//
-//FINAL_TRIGS.forEach(trig=>{
-////    let trig = FINAL_TRIGS[nr];
-//
-//
-//
-//    let walk = new Walk([trig[0], trig[1], trig[2], trig[3], trig[4], trig[5]], PALETTES[R()*PALETTES.length|0])
-//    walk.fill();
-//})
-//
-//
-//drawAll=_=>{
-//    X.globalAlpha=1;
-//    X.globalCompositeOperation='source-over'
-//    FINAL_TRIGS.forEach(trig=>{
-//    //    let trig = FINAL_TRIGS[nr];
-//
-//        let walk = new Walk([trig[0], trig[1], trig[2], trig[3], trig[4], trig[5]], PALETTES[R()*PALETTES.length|0])
-//        walk.draw();
-//    })
-//}
-
-
-
-
-//function checkT(){
-//    FINAL_TRIGS.forEach(t=>{
-//        console.log(t);
-//        let ax=t[0];
-//        let ay=t[1];
-//        let bx=t[2];
-//        let by=t[3];
-//        let cx=t[4];
-//        let cy=t[5];
-//        let hue = t[8];
-//        console.log(hue)
-//        fill_polygon([[ax,ay],[bx,by],[cx,cy]], hsl_to_str(hue,60,40))
-//    //    fill_polygon([a,inside, b], hsl_to_str(hue,60,40), hue)
-//    //    fill_polygon([a,inside,c], hsl_to_str(hue,60,60), hue)
-//    //    fill_polygon([inside,b,c], hsl_to_str(hue,60,80), hue)
-//
-//    })
-//
-//}
-
-
-
-
-
 
 
 
