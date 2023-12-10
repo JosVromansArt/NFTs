@@ -3,24 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <title>Pixel Template</title>
+    <style>
+body {
+  background-color: #aaf;
+  overflow: hidden;
+  margin: 0px;
+  display: flex;
+}
+canvas {
+  margin-left: auto;
+  margin-right: auto;
+}
+    </style>
 </head>
 <body>
 
 <canvas id="C"></canvas>
 
 <script>
-
 // Make all calculations as if the canvas has dimensions 1000 x 1000. Only when actually drawing, make the conversion
-DIM=1000;
-C.width = DIM;
-C.height = DIM;
 X = C.getContext('2d');
+W=window;
+DIM=1000;
+dim = Math.min(innerWidth, innerHeight);
+SCALE = dim/DIM;
+pR = W.devicePixelRatio;
+C.width = ~~(dim * pR);
+C.height = ~~(dim * pR);
+C.style.width = `${dim}px`;
+C.style.height = `${dim}px`;
+X.save();
+X.scale(pR, pR);
+
+// TODO: allow url parameter to set canvas to a fixed size, for example 5000x5000, dont use the window width in that case
 
 // All drawing goes via this method. The input values use the dimensions as specified in DIM  (a 1000x1000 canvas).
 // However, the actual screen size and the pixelRatio have to be taken into account before actually drawing.
 fillSquare=(x,y,sideLength,color)=>{
     X.fillStyle = color;
-    X.fillRect(x,y,sideLength, sideLength);
+    X.fillRect(x*SCALE,y*SCALE,sideLength*SCALE, sideLength*SCALE);
 }
 
 // Divide the square canvas in 4 areas: red, blue, orange and a bottom right square in black/white
