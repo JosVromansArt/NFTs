@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pixel Template</title>
+</head>
+<body>
+
+<canvas id="C"></canvas>
+
+<script>
+
+// Make all calculations as if the canvas has dimensions 1000 x 1000. Only when actually drawing, make the conversion
+DIM=1000;
+C.width = DIM;
+C.height = DIM;
+X = C.getContext('2d');
+
+// All drawing goes via this method. The input values use the dimensions as specified in DIM  (a 1000x1000 canvas).
+// However, the actual screen size and the pixelRatio have to be taken into account before actually drawing.
+fillSquare=(x,y,sideLength,color)=>{
+    X.fillStyle = color;
+    X.fillRect(x,y,sideLength, sideLength);
+}
+
+// Divide the square canvas in 4 areas: red, blue, orange and a bottom right square in black/white
+fillSquare(0,0,500,'red');
+fillSquare(500,0,500,'blue');
+fillSquare(0,500,500,'orange');
+
+fillSquare(500,500,500,'white');
+fillSquare(500,500,250,'#221');
+fillSquare(750,750,250,'#221');
+
+// add a rows of small gray and black squares on the bottom and top of the canvas, so the edges can be inspected
+[25, 75].forEach(count=>{
+    let color=count==25?'#eee':'#000';
+    let step=DIM/count;
+    for (let i=0; i<count; i+=2){
+        fillSquare(step*i, DIM-step, step, color);
+        fillSquare(step*i, 0, step, color);
+    }
+})
+
+// white canvas
+let topLeft = [DIM/10, DIM/10];  // of this white canvas
+
+fillSquare(...topLeft, DIM*.6, '#fff');
+
+// Draw a fern to showcase drawing figures with small pixels. (code taken from https://en.wikipedia.org/wiki/Barnsley_fern)
+X.fillStyle='green';
+x=y=xn=yn=0;
+for (let n=0; n<299999; n++){
+    let r=Math.random();
+
+    if (r < 0.01){
+        xn = 0;
+        yn = 0.16 * y;
+    } else if (r < 0.86){
+        xn = 0.85 * x + 0.04 * y;
+        yn = -0.04 * x + 0.85 * y + 1.6;
+    } else if (r < 0.93){
+        xn = 0.2 * x - 0.26 * y;
+        yn = 0.33 * x + 0.22 * y + 1.6;
+    } else {
+        xn = -0.15 * x + 0.28 * y;
+        yn = 0.26 * x + 0.24 * y + 0.44;
+    }
+
+    fillSquare(xn*50+DIM*.4, (1-yn)*55+DIM*.63,.3,'green');
+    x = xn;
+    y = yn;
+}
+</script>
+</body>
+</html>
